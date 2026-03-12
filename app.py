@@ -18,7 +18,7 @@ st.write("Find movies similar to your favorite ones")
 # ---------------- Download similarity.pkl if missing ----------------
 
 FILE_ID = "YOUR_FILE_ID"   # Replace with your Google Drive file id
-URL = f"https://drive.google.com/uc?id={FILE_ID}"
+URL = f"https://drive.google.com/uc?id={1O4pQe4NbRTeZcbx4PyxDSzr9uClGWH6D}"
 
 if not os.path.exists("similarity.pkl"):
     st.write("Downloading recommendation model... (first run only)")
@@ -115,3 +115,4 @@ if st.button("Recommend Movies"):
     with col5:
         st.image(posters[4])
         st.caption(names[4])
+
