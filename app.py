@@ -1,174 +1,94 @@
 import streamlit as st
 from movie_api import *
-import plotly.express as px
+from movie_api import IMG
 
-st.set_page_config(page_title="Go Movie Discovery",layout="wide")
+st.set_page_config(page_title="Go Movie Discovery", layout="wide")
 
 st.title("🎬 Go Movie Discovery")
 
-# SEARCH
-query=st.text_input("🔎 Search Movie / Actor / Series")
-
-
+# STEP 1: session memory
 if "selected_movie" not in st.session_state:
     st.session_state.selected_movie = None
-    
-# -----------------------
-# SEARCH RESULT
-# -----------------------
 
-if query:
 
-    results=search_multi(query)
+# SEARCH BAR
+query = st.text_input("🔎 Search Movie")
 
-    if results:
 
-        item=results[0]
+# ----------------------------
+# STEP 2: SHOW TRENDING MOVIES
+# ----------------------------
 
-        if item["media_type"]=="movie":
+st.subheader("🔥 Trending Movies")
 
-            m=movie_details(item["id"])
+movies = trending()
 
-            col1,col2=st.columns([1,2])
+cols = st.columns(5)
 
-            with col1:
+for i, m in enumerate(movies[:5]):
 
-                st.image(IMG+m["poster_path"])
+    with cols[i]:
 
-            with col2:
+        st.image(IMG + str(m["poster_path"]))
 
-                st.header(m["title"])
+        if st.button(m["title"]):
 
-                st.write("⭐ Rating:",m["vote_average"])
+            st.session_state.selected_movie = m["id"]
 
-                st.write(m["overview"])
 
-            # TRAILER
-            t=trailer(item["id"])
+# ----------------------------------
+# STEP 3: MOVIE DETAIL PAGE
+# ----------------------------------
 
-            if t:
+if st.session_state.selected_movie:
 
-                st.video(t)
+    movie_id = st.session_state.selected_movie
 
-            # OTT
-            st.subheader("📺 Available On")
+    m = movie_details(movie_id)
 
-            providers=ott(item["id"])
+    st.divider()
 
-            if providers:
+    st.title(m["title"])
 
-                for p in providers:
+    col1, col2 = st.columns([1,2])
 
-                    st.write("•",p)
+    with col1:
+        st.image(IMG + str(m["poster_path"]))
 
-            else:
+    with col2:
 
-                st.write("No OTT data")
+        st.write("⭐ Rating:", m["vote_average"])
+
+        st.write(m["overview"])
+
+
+# ----------------------------------
+# STEP 4: TRAILER
+# ----------------------------------
+
+    t = trailer(movie_id)
+
+    if t:
+
+        st.subheader("🎥 Trailer")
+
+        st.video(t)
+
+
+# ----------------------------------
+# STEP 5: OTT PLATFORMS
+# ----------------------------------
+
+    providers = ott(movie_id)
+
+    st.subheader("📺 Available On")
+
+    if providers:
+
+        for p in providers:
+
+            st.write("•", p)
 
     else:
 
-        st.error("Movie not found")
-
-# -----------------------
-# HOMEPAGE
-# -----------------------
-
-else:
-
-    # TRENDING
-    st.subheader("🔥 Trending")
-
-    cols=st.columns(6)
-
-    for i,m in enumerate(trending()[:6]):
-
-        with cols[i]:
-
-            st.image(IMG+m["poster_path"])
-
-            st.caption(m["title"])
-
-
-    # UPCOMING
-    st.subheader("🎬 Upcoming")
-
-    cols=st.columns(6)
-
-    for i,m in enumerate(upcoming()[:6]):
-
-        with cols[i]:
-
-            st.image(IMG+m["poster_path"])
-
-            st.caption(m["title"])
-
-
-    # TOP RATED
-    st.subheader("⭐ Top Rated")
-
-    cols=st.columns(6)
-
-    for i,m in enumerate(top_rated()[:6]):
-
-        with cols[i]:
-
-            st.image(IMG+m["poster_path"])
-
-            st.caption(m["title"])
-
-
-    # INDIAN MOVIES
-    st.subheader("🇮🇳 Indian Movies")
-
-    cols=st.columns(6)
-
-    for i,m in enumerate(indian()[:6]):
-
-        with cols[i]:
-
-            st.image(IMG+m["poster_path"])
-
-            st.caption(m["title"])
-
-
-    # TV
-    st.subheader("📺 TV Series")
-
-    cols=st.columns(6)
-
-    for i,m in enumerate(tv()[:6]):
-
-        with cols[i]:
-
-            st.image(IMG+m["poster_path"])
-
-            st.caption(m["name"])
-
-
-    # ANIME
-    st.subheader("🍥 Anime")
-
-    cols=st.columns(6)
-
-    for i,m in enumerate(anime()[:6]):
-
-        with cols[i]:
-
-            st.image(IMG+m["poster_path"])
-
-            st.caption(m["name"])
-
-
-    # POPULARITY CHART
-    st.subheader("📊 Popularity Chart")
-
-    movies=trending()[:10]
-
-    names=[m["title"] for m in movies]
-
-    scores=[m["popularity"] for m in movies]
-
-    fig=px.bar(x=names,y=scores)
-
-    st.plotly_chart(fig)
-
+        st.write("OTT data not available")
