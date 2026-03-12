@@ -17,9 +17,7 @@ def movie_row_scroll(title, movies):
             html += f"""
             <div class="movie-card">
                 <img src="{poster}">
-                <p style="color:white;text-align:center">
-                {m.get("title") or m.get("name")}
-                </p>
+                <p>{m.get("title") or m.get("name")}</p>
             </div>
             """
 
