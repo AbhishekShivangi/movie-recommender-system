@@ -1,61 +1,61 @@
 import requests
 
-API_KEY="624e1be491b94af1717b2ac8e121b5f1"
+API_KEY = "624e1be491b94af1717b2ac8e121b5f1"
+
+
+def search_movie(query):
+
+    url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={query}"
+
+    data = requests.get(url).json()
+
+    return data.get("results", [])
+
 
 def get_movie_details(movie_id):
 
-    url=f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}&language=en-US"
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
 
-    data=requests.get(url).json()
+    data = requests.get(url).json()
 
     return {
-        "title":data.get("title"),
-        "rating":data.get("vote_average"),
-        "overview":data.get("overview"),
-        "popularity":data.get("popularity"),
-        "poster":"https://image.tmdb.org/t/p/w500"+str(data.get("poster_path"))
+        "title": data.get("title"),
+        "rating": data.get("vote_average"),
+        "overview": data.get("overview"),
+        "poster": "https://image.tmdb.org/t/p/w500" + str(data.get("poster_path"))
     }
 
 
 def get_trailer(movie_id):
 
-    url=f"https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key={API_KEY}"
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key={API_KEY}"
 
-    data=requests.get(url).json()
+    data = requests.get(url).json()
 
     if "results" in data:
 
-        for video in data["results"]:
+        for v in data["results"]:
 
-            if video["type"]=="Trailer" and video["site"]=="YouTube":
+            if v["type"] == "Trailer" and v["site"] == "YouTube":
 
-                return "https://www.youtube.com/watch?v="+video["key"]
+                return "https://www.youtube.com/watch?v=" + v["key"]
 
     return None
 
 
 def get_trending():
 
-    url=f"https://api.themoviedb.org/3/trending/movie/week?api_key={API_KEY}"
+    url = f"https://api.themoviedb.org/3/trending/movie/week?api_key={API_KEY}"
 
-    data=requests.get(url).json()
+    data = requests.get(url).json()
 
-    return data.get("results",[])
+    return data.get("results", [])
 
 
 def get_upcoming():
 
-    url=f"https://api.themoviedb.org/3/movie/upcoming?api_key={API_KEY}&language=en-US"
+    url = f"https://api.themoviedb.org/3/movie/upcoming?api_key={API_KEY}"
 
-    data=requests.get(url).json()
+    data = requests.get(url).json()
 
-    return data.get("results",[])
-
-def get_kannada_movies(page=1):
-
-    url=f"https://api.themoviedb.org/3/discover/movie?api_key={API_KEY}&with_original_language=kn&region=IN&page={page}"
-
-    data=requests.get(url).json()
-
-    return data.get("results",[])
-
+    return data.get("results", [])
