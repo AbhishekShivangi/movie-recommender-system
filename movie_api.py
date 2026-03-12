@@ -42,3 +42,11 @@ def get_trending():
 
     return data.get("results",[])
 
+
+def get_upcoming():
+
+    url=f"https://api.themoviedb.org/3/movie/upcoming?api_key={API_KEY}&language=en-US"
+
+    data=requests.get(url).json()
+
+    return data.get("results",[])
