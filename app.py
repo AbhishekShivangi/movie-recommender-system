@@ -2,17 +2,23 @@ import streamlit as st
 import pickle
 import requests
 import certifi
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 
 st.title("🎬 Movie Recommender System")
 st.write("Find movies similar to your favorite ones")
 
-# Load files
 movies = pickle.load(open("movies_list.pkl","rb"))
-similarity = pickle.load(open("similarity.pkl","rb"))
 
 movie_list = movies['title'].values
+
+# Create vectors from movie tags
+cv = CountVectorizer(max_features=5000, stop_words='english')
+vectors = cv.fit_transform(movies['tags']).toarray()
+
+similarity = cosine_similarity(vectors)
 
 
 @st.cache_data
