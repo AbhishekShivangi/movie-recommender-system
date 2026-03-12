@@ -12,6 +12,24 @@ def search_movie(query):
     return data.get("results", [])
 
 
+def search_actor(name):
+
+    url = f"https://api.themoviedb.org/3/search/person?api_key={API_KEY}&query={name}"
+
+    data = requests.get(url).json()
+
+    return data.get("results", [])
+
+
+def get_actor_movies(actor_id):
+
+    url = f"https://api.themoviedb.org/3/person/{actor_id}/movie_credits?api_key={API_KEY}"
+
+    data = requests.get(url).json()
+
+    return data.get("cast", [])
+
+
 def get_movie_details(movie_id):
 
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
@@ -43,19 +61,12 @@ def get_trailer(movie_id):
     return None
 
 
-def get_trending():
+def get_ott(movie_id):
 
-    url = f"https://api.themoviedb.org/3/trending/movie/week?api_key={API_KEY}"
-
-    data = requests.get(url).json()
-
-    return data.get("results", [])
-
-
-def get_upcoming():
-
-    url = f"https://api.themoviedb.org/3/movie/upcoming?api_key={API_KEY}"
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}/watch/providers?api_key={API_KEY}"
 
     data = requests.get(url).json()
 
-    return data.get("results", [])
+    providers = data.get("results", {}).get("IN", {})
+
+    return providers
