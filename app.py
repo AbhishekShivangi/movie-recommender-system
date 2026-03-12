@@ -1,6 +1,6 @@
 import streamlit as st
-from api import *
-from components.cards import movie_row
+from movie_api import *
+from recommender import recommend
 
 st.set_page_config(page_title="Go Movie Discovery",layout="wide")
 
@@ -8,33 +8,29 @@ st.set_page_config(page_title="Go Movie Discovery",layout="wide")
 with open("assets/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>",unsafe_allow_html=True)
 
-
-st.markdown(
-"""
+# hero
+st.markdown("""
 <div class='hero'>
 <h1 style='color:red'>🎬 Go Movie Discovery</h1>
 <p style='color:white'>Discover movies, actors, anime and series</p>
 </div>
-""",
-unsafe_allow_html=True
-)
+""",unsafe_allow_html=True)
 
-query=st.text_input("🔎 Search movie or actor")
-
+query = st.text_input("🔎 Search Movie or Actor")
 
 if query:
 
-    results=search(query)
+    results = search_movie(query)
 
     if results:
 
-        item=results[0]
+        item = results[0]
 
         if item["media_type"]=="movie":
 
-            m=movie(item["id"])
+            m = get_movie_details(item["id"])
 
-            col1,col2=st.columns([1,2])
+            col1,col2 = st.columns([1,2])
 
             with col1:
                 st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
@@ -44,25 +40,118 @@ if query:
                 st.write("⭐ Rating:",m["vote_average"])
                 st.write(m["overview"])
 
-            movie_row("🍿 Recommended",recommendations(item["id"]))
+            trailer=get_trailer(item["id"])
 
-        if item["media_type"]=="person":
+            if trailer:
+                st.video(trailer)
 
-            st.title(item["name"])
+            st.subheader("🍿 Recommended Movies")
 
-            movie_row("🎬 Movies",actor_movies(item["id"]))
+            try:
 
+                names,ids=recommend(m["title"])
 
-movie_row("🔥 Trending Movies",trending())
+                cols=st.columns(5)
 
-movie_row("⭐ Popular Movies",popular())
+                for i in range(5):
 
-movie_row("🇮🇳 Bollywood",indian("hi"))
+                    with cols[i]:
 
-movie_row("🎬 Tollywood",indian("te"))
+                        movie=get_movie_details(ids[i])
 
-movie_row("🌟 Sandalwood",indian("kn"))
+                        st.image("https://image.tmdb.org/t/p/w500"+str(movie["poster_path"]))
 
-movie_row("📺 TV Series",tv())
+                        st.caption(names[i])
 
-movie_row("🍥 Anime",anime())
+            except:
+
+                st.write("No recommendation available.")
+
+# trending
+st.subheader("🔥 Trending Movies")
+
+cols=st.columns(5)
+
+for i,m in enumerate(trending()[:5]):
+
+    with cols[i]:
+
+        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+
+        st.caption(m["title"])
+
+# upcoming
+st.subheader("🎬 Upcoming Movies")
+
+cols=st.columns(5)
+
+for i,m in enumerate(upcoming()[:5]):
+
+    with cols[i]:
+
+        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+
+        st.caption(m["title"])
+
+# indian sections
+st.subheader("🇮🇳 Bollywood")
+
+cols=st.columns(5)
+
+for i,m in enumerate(indian("hi")[:5]):
+
+    with cols[i]:
+
+        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+
+        st.caption(m["title"])
+
+st.subheader("🎬 Tollywood")
+
+cols=st.columns(5)
+
+for i,m in enumerate(indian("te")[:5]):
+
+    with cols[i]:
+
+        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+
+        st.caption(m["title"])
+
+st.subheader("🌟 Sandalwood")
+
+cols=st.columns(5)
+
+for i,m in enumerate(indian("kn")[:5]):
+
+    with cols[i]:
+
+        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+
+        st.caption(m["title"])
+
+# tv
+st.subheader("📺 TV Series")
+
+cols=st.columns(5)
+
+for i,m in enumerate(tv()[:5]):
+
+    with cols[i]:
+
+        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+
+        st.caption(m["name"])
+
+# anime
+st.subheader("🍥 Anime")
+
+cols=st.columns(5)
+
+for i,m in enumerate(anime()[:5]):
+
+    with cols[i]:
+
+        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+
+        st.caption(m["name"])
