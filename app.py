@@ -13,45 +13,9 @@ st.title("🎬 Go Movie Discovery Platform")
 movies = pickle.load(open("movies_list.pkl","rb"))
 movies = pd.DataFrame(movies)
 
-movie_titles = movies['title'].values
 
-
-# ---------- SELECT MOVIE ----------
-selected_movie = st.selectbox(
-    "Select Movie for Recommendation",
-    movie_titles
-)
-
-# ---------- RECOMMEND BUTTON ----------
-if st.button("⭐ Recommend Movies"):
-
-    names, ids = recommend(selected_movie)
-
-    posters = []
-
-    for i in ids:
-
-        movie = get_movie_details(i)
-
-        posters.append(movie["poster"])
-
-    st.subheader("🍿 Recommended Movies")
-
-    cols = st.columns(5)
-
-    for i in range(5):
-
-        with cols[i]:
-
-            st.image(posters[i])
-
-            st.caption(names[i])
-
-
-# ---------- SEARCH MOVIE ----------
-st.subheader("🔎 Search Movie")
-
-query = st.text_input("Type movie name")
+# ---------- SEARCH ----------
+query = st.text_input("🔎 Search Movie")
 
 if query:
 
@@ -78,6 +42,7 @@ if query:
 
             st.write(details["overview"])
 
+        # ---------- TRAILER ----------
         trailer = get_trailer(movie_id)
 
         if trailer:
@@ -85,6 +50,35 @@ if query:
             st.subheader("🎥 Trailer")
 
             st.video(trailer)
+
+        # ---------- RECOMMEND ----------
+        st.subheader("🍿 Recommended Movies")
+
+        try:
+
+            names, ids = recommend(details["title"])
+
+            posters = []
+
+            for i in ids:
+
+                movie_data = get_movie_details(i)
+
+                posters.append(movie_data["poster"])
+
+            cols = st.columns(5)
+
+            for i in range(5):
+
+                with cols[i]:
+
+                    st.image(posters[i])
+
+                    st.caption(names[i])
+
+        except:
+
+            st.write("No recommendations available.")
 
     else:
 
