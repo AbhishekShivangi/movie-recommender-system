@@ -4,14 +4,15 @@ import pandas as pd
 import requests
 from sklearn.metrics.pairwise import cosine_similarity
 
-st.set_page_config(page_title="AI Movie Recommender", page_icon="🎬", layout="wide")
+st.set_page_config(page_title="Go Movie Recommender", page_icon="🎬", layout="wide")
 
 # ---------- Custom CSS ----------
 st.markdown("""
 <style>
-.main-title{
+
+.title{
 text-align:center;
-font-size:45px;
+font-size:50px;
 font-weight:bold;
 color:#ff4b4b;
 }
@@ -23,24 +24,22 @@ color:gray;
 margin-bottom:30px;
 }
 
-.movie-card{
-background-color:#111111;
-padding:10px;
-border-radius:10px;
-text-align:center;
-}
-
 .stButton>button{
 background-color:#ff4b4b;
 color:white;
 font-size:18px;
-border-radius:8px;
+border-radius:10px;
 padding:10px 20px;
 }
+
+.poster{
+border-radius:10px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<p class="main-title">🎬 AI Movie Recommender</p>', unsafe_allow_html=True)
+st.markdown('<p class="title">🎬 Go Movie Recommender</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Search a movie and discover similar ones</p>', unsafe_allow_html=True)
 
 # ---------- Load Data ----------
@@ -53,7 +52,8 @@ similarity = cosine_similarity(vectors)
 
 movie_titles = movies['title'].values
 
-# detect id column
+
+# ---------- Detect ID column ----------
 if "movie_id" in movies.columns:
     id_column = "movie_id"
 else:
@@ -73,13 +73,13 @@ def fetch_poster(movie_id):
         if poster:
             return "https://image.tmdb.org/t/p/w500/"+poster
 
-        return "https://via.placeholder.com/300x450"
+        return "https://via.placeholder.com/300x450?text=No+Poster"
 
     except:
-        return "https://via.placeholder.com/300x450"
+        return "https://via.placeholder.com/300x450?text=Error"
 
 
-# ---------- Recommendation ----------
+# ---------- Recommend ----------
 def recommend(movie):
 
     index=movies[movies['title']==movie].index[0]
@@ -106,44 +106,64 @@ def recommend(movie):
 
 
 # ---------- Search ----------
-search_movie=st.selectbox(
-    "🔎 Search Movie",
-    movie_titles
-)
+search_movie=st.text_input("🔎 Type Movie Name")
 
-# show selected poster
-movie_id=movies[movies['title']==search_movie].iloc[0][id_column]
-poster=fetch_poster(movie_id)
+matches=[title for title in movie_titles if search_movie.lower() in title.lower()]
 
-st.image(poster,width=250)
 
-# ---------- Recommend Button ----------
-if st.button("🎬 Recommend Similar Movies"):
+if search_movie:
 
-    with st.spinner("Finding similar movies..."):
+    if matches:
 
-        names,posters=recommend(search_movie)
+        selected_movie=st.selectbox("Select Movie",matches)
 
-    st.subheader("Recommended Movies")
+        movie_id=movies[movies['title']==selected_movie].iloc[0][id_column]
 
-    col1,col2,col3,col4,col5=st.columns(5)
+        poster=fetch_poster(movie_id)
 
-    with col1:
-        st.image(posters[0])
-        st.caption(names[0])
+        st.subheader("Selected Movie")
 
-    with col2:
-        st.image(posters[1])
-        st.caption(names[1])
+        col1,col2=st.columns([1,2])
 
-    with col3:
-        st.image(posters[2])
-        st.caption(names[2])
+        with col1:
+            st.image(poster,width=250)
 
-    with col4:
-        st.image(posters[3])
-        st.caption(names[3])
+        with col2:
+            st.markdown(f"### {selected_movie}")
+            st.write("Click recommend to see similar movies.")
 
-    with col5:
-        st.image(posters[4])
-        st.caption(names[4])
+        if st.button("🎬 Recommend Movies"):
+
+            with st.spinner("Finding similar movies..."):
+
+                names,posters=recommend(selected_movie)
+
+            st.subheader("Recommended Movies")
+
+            col1,col2,col3,col4,col5=st.columns(5)
+
+            with col1:
+                st.image(posters[0])
+                st.caption(names[0])
+
+            with col2:
+                st.image(posters[1])
+                st.caption(names[1])
+
+            with col3:
+                st.image(posters[2])
+                st.caption(names[2])
+
+            with col4:
+                st.image(posters[3])
+                st.caption(names[3])
+
+            with col5:
+                st.image(posters[4])
+                st.caption(names[4])
+
+    else:
+
+        st.error("❌ Movie not found")
+
+        st.image("https://via.placeholder.com/300x450?text=Movie+Not+Found")
