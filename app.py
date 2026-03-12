@@ -5,6 +5,7 @@ import pandas as pd
 from movie_api import get_movie_details,get_trailer,get_trending,get_upcoming
 from recommender import recommend
 from ui import hero,show_movie,recommendation_grid,movie_not_found
+from movie_api import get_kannada_movies
 
 
 st.set_page_config(
@@ -100,3 +101,21 @@ for i,movie in enumerate(upcoming[:5]):
         st.image(poster)
 
         st.caption(movie["title"])
+
+# ---------- Kannada Movies ----------
+st.subheader("🌟 Sandalwood (Kannada) Movies")
+
+kannada_movies = get_kannada_movies()
+
+cols = st.columns(5)
+
+for i,movie in enumerate(kannada_movies[:10]):
+
+    with cols[i%5]:
+
+        poster="https://image.tmdb.org/t/p/w500"+str(movie["poster_path"])
+
+        st.image(poster)
+
+        st.caption(movie["title"])
+
