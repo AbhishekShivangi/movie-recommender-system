@@ -11,9 +11,8 @@ st.write("Find movies similar to your favorite ones")
 
 
 # Load files
-movies_dict = pickle.load(open("movie_dict.pkl","rb"))
-movies = pd.DataFrame(movies_dict)
-
+# Load data
+movies = pickle.load(open("movies_list.pkl","rb"))
 similarity = pickle.load(open("similarity.pkl","rb"))
 
 movie_list = movies['title'].values
@@ -89,4 +88,5 @@ if st.button("Recommend Movies"):
     with col5:
         st.image(posters[4])
         st.caption(names[4])
+
 
