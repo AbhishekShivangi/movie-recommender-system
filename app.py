@@ -1,92 +1,43 @@
-import streamlit as st
-import pickle
-import pandas as pd
+import requests
 
-from recommender import recommend
-from movie_api import get_movie_details, get_trailer
-from ui import apply_custom_css, hero_section, search_bar, show_movie_details, recommendation_grid, movie_not_found
+API_KEY="YOUR_TMDB_API_KEY"
 
+def get_movie_details(movie_id):
 
-# ---------- PAGE CONFIG ----------
-st.set_page_config(
-    page_title="Go Movie Discovery",
-    page_icon="🎬",
-    layout="wide"
-)
+    url=f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}&language=en-US"
 
-# ---------- UI STYLE ----------
-apply_custom_css()
+    data=requests.get(url).json()
 
-# ---------- HERO INTRO ----------
-hero_section()
-
-# ---------- LOAD DATA ----------
-movies = pickle.load(open("movies_list.pkl", "rb"))
-movies = pd.DataFrame(movies)
-
-movie_titles = movies["title"].values
+    return {
+        "title":data.get("title"),
+        "rating":data.get("vote_average"),
+        "overview":data.get("overview"),
+        "popularity":data.get("popularity"),
+        "poster":"https://image.tmdb.org/t/p/w500"+str(data.get("poster_path"))
+    }
 
 
-# ---------- SEARCH ----------
-search = search_bar()
+def get_trailer(movie_id):
 
-matches = [m for m in movie_titles if search.lower() in m.lower()]
+    url=f"https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key={API_KEY}"
 
+    data=requests.get(url).json()
 
-if search:
+    if "results" in data:
 
-    if matches:
+        for video in data["results"]:
 
-        selected_movie = st.selectbox("Select Movie", matches)
+            if video["type"]=="Trailer" and video["site"]=="YouTube":
 
-        movie_id = movies[movies["title"] == selected_movie].iloc[0].id
+                return "https://www.youtube.com/watch?v="+video["key"]
 
-        # ---------- MOVIE DETAILS ----------
-        details = get_movie_details(movie_id)
-
-        show_movie_details(details)
-
-        # ---------- TRAILER ----------
-        trailer = get_trailer(movie_id)
-
-        if trailer:
-
-            st.subheader("🎥 Trailer")
-
-            st.video(trailer)
-
-        # ---------- RECOMMEND BUTTON ----------
-        if st.button("⭐ Recommend Similar Movies"):
-
-            with st.spinner("Finding similar movies..."):
-
-                names, ids = recommend(selected_movie)
-
-            posters = []
-
-            for i in ids:
-
-                movie = get_movie_details(i)
-
-                posters.append(movie["poster"])
-
-            st.subheader("🍿 Recommended Movies")
-
-            recommendation_grid(names, posters)
-
-    else:
-
-        movie_not_found()
+    return None
 
 
-# ---------- SIDEBAR ----------
-st.sidebar.title("🎬 Go Movie Discovery")
+def get_trending():
 
-st.sidebar.write("Movie Recommender Platform")
+    url=f"https://api.themoviedb.org/3/trending/movie/week?api_key={API_KEY}"
 
-st.sidebar.write("Features:")
+    data=requests.get(url).json()
 
-st.sidebar.write("⭐ Movie Search")
-st.sidebar.write("🎥 Trailers")
-st.sidebar.write("🍿 Recommendations")
-st.sidebar.write("🔥 Trending Movies (coming soon)")
+    return data.get("results",[])
