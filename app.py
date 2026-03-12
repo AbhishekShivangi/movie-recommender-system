@@ -2,21 +2,16 @@ import streamlit as st
 from movie_api import *
 from recommender import recommend
 
-st.set_page_config(page_title="Go Movie Discovery",layout="wide")
+st.set_page_config(page_title="Go Movie Discovery", layout="wide")
 
-# load css
-with open("assets/style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>",unsafe_allow_html=True)
+st.title("🎬 Go Movie Discovery Platform")
 
-# hero
-st.markdown("""
-<div class='hero'>
-<h1 style='color:red'>🎬 Go Movie Discovery</h1>
-<p style='color:white'>Discover movies, actors, anime and series</p>
-</div>
-""",unsafe_allow_html=True)
+# SEARCH BAR
+query = st.text_input("🔎 Search Movie, Actor, Series")
 
-query = st.text_input("🔎 Search Movie, Actor, Series, Anime")
+# ------------------------------------
+# IF USER SEARCHES
+# ------------------------------------
 
 if query:
 
@@ -26,160 +21,87 @@ if query:
 
         item = results[0]
 
-        media = item["media_type"]
-
-        # MOVIE
-        if media == "movie":
+        if item["media_type"] == "movie":
 
             movie_id = item["id"]
 
             details = get_movie_details(movie_id)
 
-            st.image("https://image.tmdb.org/t/p/w500"+str(details["poster_path"]))
+            col1, col2 = st.columns([1,2])
 
-            st.title(details["title"])
+            with col1:
+                st.image("https://image.tmdb.org/t/p/w500"+str(details["poster_path"]))
 
-            st.write("⭐ Rating:", details["vote_average"])
+            with col2:
+                st.title(details["title"])
+                st.write("⭐ Rating:", details["vote_average"])
+                st.write(details["overview"])
 
-            st.write(details["overview"])
+            trailer = get_trailer(movie_id)
 
-        # ACTOR
-        elif media == "person":
+            if trailer:
+                st.subheader("🎥 Trailer")
+                st.video(trailer)
 
-            st.title(item["name"])
+            # RECOMMENDATIONS
+            st.subheader("🍿 Recommended Movies")
 
-            actor_id = item["id"]
+            try:
 
-            movies = get_actor_movies(actor_id)
+                names, ids = recommend(details["title"])
 
-            st.subheader("Movies")
+                cols = st.columns(5)
 
-            cols = st.columns(5)
+                for i in range(5):
 
-            for i,m in enumerate(movies[:5]):
+                    with cols[i]:
 
-                with cols[i]:
+                        movie = get_movie_details(ids[i])
 
-                    poster="https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
+                        st.image("https://image.tmdb.org/t/p/w500"+str(movie["poster_path"]))
 
-                    st.image(poster)
+                        st.caption(names[i])
 
-                    st.caption(m["title"])
+            except:
+                st.write("No recommendation available.")
 
-        # TV / SERIES
-        elif media == "tv":
+    else:
+        st.error("Movie not found")
 
-            st.title(item["name"])
+# ------------------------------------
+# IF NO SEARCH → HOMEPAGE
+# ------------------------------------
 
-            poster="https://image.tmdb.org/t/p/w500"+str(item["poster_path"])
+else:
+
+    st.subheader("🔥 Trending Movies")
+
+    trending_movies = trending()
+
+    cols = st.columns(5)
+
+    for i,m in enumerate(trending_movies[:5]):
+
+        with cols[i]:
+
+            poster = "https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
 
             st.image(poster)
 
-            st.write(item["overview"])
+            st.caption(m["title"])
 
-# trending
-st.subheader("🔥 Trending Movies")
+    st.subheader("🎬 Upcoming Movies")
 
-cols=st.columns(5)
+    upcoming_movies = upcoming()
 
-for i,m in enumerate(trending()[:5]):
+    cols = st.columns(5)
 
-    with cols[i]:
+    for i,m in enumerate(upcoming_movies[:5]):
 
-        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+        with cols[i]:
 
-        st.caption(m["title"])
+            poster = "https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
 
-# upcoming
-st.subheader("🎬 Upcoming Movies")
+            st.image(poster)
 
-cols=st.columns(5)
-
-for i,m in enumerate(upcoming()[:5]):
-
-    with cols[i]:
-
-        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
-
-        st.caption(m["title"])
-
-# indian sections
-st.subheader("🇮🇳 Bollywood")
-
-cols=st.columns(5)
-
-for i,m in enumerate(indian("hi")[:5]):
-
-    with cols[i]:
-
-        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
-
-        st.caption(m["title"])
-
-st.subheader("🎬 Tollywood")
-
-cols=st.columns(5)
-
-for i,m in enumerate(indian("te")[:5]):
-
-    with cols[i]:
-
-        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
-
-        st.caption(m["title"])
-
-st.subheader("🌟 Sandalwood")
-
-cols=st.columns(5)
-
-for i,m in enumerate(indian("kn")[:5]):
-
-    with cols[i]:
-
-        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
-
-        st.caption(m["title"])
-
-# tv
-st.subheader("📺 TV Series")
-
-cols=st.columns(5)
-
-for i,m in enumerate(tv()[:5]):
-
-    with cols[i]:
-
-        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
-
-        st.caption(m["name"])
-
-# anime
-st.subheader("🍥 Anime")
-
-cols=st.columns(5)
-
-for i,m in enumerate(anime()[:5]):
-
-    with cols[i]:
-
-        st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
-
-        st.caption(m["name"])
-
-
-#korean Dreams
-st.subheader("🇰🇷 Korean Dramas")
-
-cols = st.columns(5)
-
-for i,m in enumerate(korean()[:5]):
-
-    with cols[i]:
-
-        poster="https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
-
-        st.image(poster)
-
-        st.caption(m["name"])
-
-
+            st.caption(m["title"])
