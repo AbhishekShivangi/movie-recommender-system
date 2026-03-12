@@ -17,20 +17,39 @@ st.write("Find movies similar to your favorite ones")
 
 # ---------------- Download similarity.pkl if missing ----------------
 
-FILE_ID = "1O4pQe4NbRTeZcbx4PyxDSzr9uClGWH6D"
-URL = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
 
-def download_file():
-    response = requests.get(URL, stream=True)
-    with open("similarity.pkl", "wb") as f:
-        for chunk in response.iter_content(chunk_size=8192):
+FILE_ID = "1O4pQe4NbRTeZcbx4PyxDSzr9uClGWH6D"
+URL = "https://docs.google.com/uc?export=download"
+
+def download_file_from_google_drive(file_id, destination):
+    session = requests.Session()
+
+    response = session.get(URL, params={'id': file_id}, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    save_response_content(response, destination)
+
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+    return None
+
+def save_response_content(response, destination):
+    CHUNK_SIZE = 32768
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
             if chunk:
                 f.write(chunk)
 
 if not os.path.exists("similarity.pkl"):
-    st.write("Downloading similarity model... please wait ⏳")
-    download_file()
-
+    st.write("Downloading recommendation model... please wait ⏳")
+    download_file_from_google_drive(FILE_ID, "similarity.pkl")
 # ---------------- Load Data ----------------
 
 movies = pickle.load(open("movies_list.pkl", "rb"))
@@ -122,6 +141,7 @@ if st.button("Recommend Movies"):
     with col5:
         st.image(posters[4])
         st.caption(names[4])
+
 
 
 
