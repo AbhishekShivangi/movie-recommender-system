@@ -89,3 +89,11 @@ def get_actor_movies(actor_id):
     return data.get("results", [])
 
 
+def korean():
+
+    url=f"https://api.themoviedb.org/3/discover/tv?api_key={API_KEY}&with_original_language=ko"
+
+    return requests.get(url).json().get("results",[])
+
+
+
