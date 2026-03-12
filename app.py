@@ -9,6 +9,10 @@ st.title("🎬 Go Movie Discovery")
 # SEARCH
 query=st.text_input("🔎 Search Movie / Actor / Series")
 
+
+if "selected_movie" not in st.session_state:
+    st.session_state.selected_movie = None
+    
 # -----------------------
 # SEARCH RESULT
 # -----------------------
@@ -167,3 +171,4 @@ else:
     fig=px.bar(x=names,y=scores)
 
     st.plotly_chart(fig)
+
