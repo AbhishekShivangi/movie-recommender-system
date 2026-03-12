@@ -2,41 +2,44 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-from movie_api import get_movie_details,get_trailer,get_trending,get_upcoming
+from movie_api import search_movie, get_movie_details, get_trailer, get_trending, get_upcoming
 from recommender import recommend
-from ui import hero,show_movie,recommendation_grid,movie_not_found
-from movie_api import get_kannada_movies
 
 
-st.set_page_config(
-page_title="Go Movie Discovery",
-layout="wide"
-)
+st.set_page_config(page_title="Go Movie Discovery", layout="wide")
 
-hero()
+st.title("🎬 Go Movie Discovery Platform")
 
-movies = pickle.load(open("movies_list.pkl","rb"))
-movies = pd.DataFrame(movies)
+# -------- Search --------
 
-movie_titles = movies['title'].values
+query = st.text_input("🔎 Search Movie")
 
-search = st.text_input("🔎 Search Movie")
+if query:
 
-matches=[m for m in movie_titles if search.lower() in m.lower()]
+    results = search_movie(query)
 
-if search:
+    if results:
 
-    if matches:
+        movie = results[0]
 
-        selected_movie=st.selectbox("Select Movie",matches)
+        movie_id = movie["id"]
 
-        movie_id=movies[movies['title']==selected_movie].iloc[0].id
+        details = get_movie_details(movie_id)
 
-        details=get_movie_details(movie_id)
+        col1, col2 = st.columns([1, 2])
 
-        show_movie(details)
+        with col1:
+            st.image(details["poster"], width=250)
 
-        trailer=get_trailer(movie_id)
+        with col2:
+
+            st.subheader(details["title"])
+
+            st.write("⭐ Rating:", details["rating"])
+
+            st.write(details["overview"])
+
+        trailer = get_trailer(movie_id)
 
         if trailer:
 
@@ -44,78 +47,44 @@ if search:
 
             st.video(trailer)
 
-        if st.button("⭐ Recommend Similar Movies"):
-
-            names,ids=recommend(selected_movie)
-
-            posters=[]
-
-            for i in ids:
-
-                movie=get_movie_details(i)
-
-                posters.append(movie["poster"])
-
-            st.subheader("🍿 Recommended Movies")
-
-            recommendation_grid(names,posters)
-
     else:
 
-        movie_not_found()
+        st.error("Movie not found")
 
 
-# ---------- Trending Movies ----------
+# -------- Trending --------
 
 st.subheader("🔥 Trending Movies")
 
-trending=get_trending()
-
-cols=st.columns(5)
-
-for i,movie in enumerate(trending[:5]):
-
-    with cols[i]:
-
-        poster="https://image.tmdb.org/t/p/w500"+str(movie["poster_path"])
-
-        st.image(poster)
-
-        st.caption(movie["title"])
-
-
-# ---------- Upcoming Movies ----------
-
-st.subheader("🎬 Upcoming Movies")
-
-upcoming=get_upcoming()
-
-cols=st.columns(5)
-
-for i,movie in enumerate(upcoming[:5]):
-
-    with cols[i]:
-
-        poster="https://image.tmdb.org/t/p/w500"+str(movie["poster_path"])
-
-        st.image(poster)
-
-        st.caption(movie["title"])
-
-# ---------- Kannada Movies ----------
-st.subheader("🌟 Sandalwood (Kannada) Movies")
-
-kannada_movies = get_kannada_movies()
+trending = get_trending()
 
 cols = st.columns(5)
 
-for i,movie in enumerate(kannada_movies[:10]):
+for i, m in enumerate(trending[:5]):
 
-    with cols[i%5]:
+    with cols[i]:
 
-        poster="https://image.tmdb.org/t/p/w500"+str(movie["poster_path"])
+        poster = "https://image.tmdb.org/t/p/w500" + str(m["poster_path"])
 
         st.image(poster)
 
-        st.caption(movie["title"])
+        st.caption(m["title"])
 
+
+# -------- Upcoming --------
+
+st.subheader("🎬 Upcoming Movies")
+
+upcoming = get_upcoming()
+
+cols = st.columns(5)
+
+for i, m in enumerate(upcoming[:5]):
+
+    with cols[i]:
+
+        poster = "https://image.tmdb.org/t/p/w500" + str(m["poster_path"])
+
+        st.image(poster)
+
+        st.caption(m["title"])
