@@ -17,14 +17,19 @@ st.write("Find movies similar to your favorite ones")
 
 # ---------------- Download similarity.pkl if missing ----------------
 
-
 FILE_ID = "1O4pQe4NbRTeZcbx4PyxDSzr9uClGWH6D"
+URL = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
 
-URL = f"https://drive.google.com/uc?id={FILE_ID}"
+def download_file():
+    response = requests.get(URL, stream=True)
+    with open("similarity.pkl", "wb") as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
 
 if not os.path.exists("similarity.pkl"):
     st.write("Downloading similarity model... please wait ⏳")
-    gdown.download(URL, "similarity.pkl", quiet=False, fuzzy=True)
+    download_file()
 
 # ---------------- Load Data ----------------
 
@@ -117,6 +122,7 @@ if st.button("Recommend Movies"):
     with col5:
         st.image(posters[4])
         st.caption(names[4])
+
 
 
 
