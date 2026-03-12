@@ -2,15 +2,15 @@ import streamlit as st
 import pickle
 import requests
 import certifi
-from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 
 st.title("🎬 Movie Recommender System")
 st.write("Find movies similar to your favorite ones")
 
-# Load movies data
+# Load files
 movies = pickle.load(open("movies_list.pkl","rb"))
+similarity = pickle.load(open("similarity.pkl","rb"))
 
 movie_list = movies['title'].values
 
@@ -33,12 +33,14 @@ def fetch_poster(movie_id):
 def recommend(movie):
 
     index = movies[movies['title']==movie].index[0]
-    vectors = movies['tags'].values.reshape(-1,1)
-    similarity = cosine_similarity(vectors)
+
     distances = similarity[index]
-    movie_list = sorted(list(enumerate(distances)),
-                        reverse=True,
-                        key=lambda x:x[1])[1:6]
+
+    movie_list = sorted(
+        list(enumerate(distances)),
+        reverse=True,
+        key=lambda x:x[1]
+    )[1:6]
 
     names=[]
     posters=[]
@@ -68,4 +70,3 @@ if st.button("Recommend Movies"):
 
             st.image(posters[i])
             st.caption(names[i])
-
