@@ -2,11 +2,23 @@ import streamlit as st
 import pickle
 import pandas as pd
 import requests
+import zipfile
+import os
 from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 
 st.title("🎬 Movie Recommender System")
+
+# ---------- Extract movie_vectors.zip ----------
+
+if not os.path.exists("movie_vectors.pkl"):
+    if os.path.exists("movie_vectors.zip"):
+        with zipfile.ZipFile("movie_vectors.zip","r") as zip_ref:
+            zip_ref.extractall()
+    else:
+        st.error("movie_vectors.zip not found in repository")
+        st.stop()
 
 # ---------- Load Data ----------
 
@@ -20,14 +32,14 @@ similarity = cosine_similarity(vectors)
 movie_list = movies['title'].values
 
 
-# ---------- Detect movie id column ----------
+# ---------- Detect ID column ----------
 
 if "movie_id" in movies.columns:
     id_column = "movie_id"
 elif "id" in movies.columns:
     id_column = "id"
 else:
-    st.error("Movie ID column not found in dataset")
+    st.error("Movie ID column not found")
     st.stop()
 
 
@@ -84,7 +96,6 @@ selected_movie = st.selectbox(
     movie_list
 )
 
-# show selected movie poster
 movie_id = movies[movies['title']==selected_movie].iloc[0][id_column]
 
 poster = fetch_poster(movie_id)
@@ -92,8 +103,6 @@ poster = fetch_poster(movie_id)
 st.subheader("Selected Movie")
 st.image(poster, width=250)
 
-
-# ---------- Recommend Button ----------
 
 if st.button("Recommend Movies"):
 
