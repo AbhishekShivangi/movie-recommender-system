@@ -33,13 +33,9 @@ def fetch_poster(movie_id):
 def recommend(movie):
 
     index = movies[movies['title']==movie].index[0]
-
     vectors = movies['tags'].values.reshape(-1,1)
-
     similarity = cosine_similarity(vectors)
-
     distances = similarity[index]
-
     movie_list = sorted(list(enumerate(distances)),
                         reverse=True,
                         key=lambda x:x[1])[1:6]
@@ -72,3 +68,4 @@ if st.button("Recommend Movies"):
 
             st.image(posters[i])
             st.caption(names[i])
+
