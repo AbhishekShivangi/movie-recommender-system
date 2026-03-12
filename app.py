@@ -1,43 +1,83 @@
-import requests
+import streamlit as st
+import pickle
+import pandas as pd
 
-API_KEY="YOUR_TMDB_API_KEY"
-
-def get_movie_details(movie_id):
-
-    url=f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}&language=en-US"
-
-    data=requests.get(url).json()
-
-    return {
-        "title":data.get("title"),
-        "rating":data.get("vote_average"),
-        "overview":data.get("overview"),
-        "popularity":data.get("popularity"),
-        "poster":"https://image.tmdb.org/t/p/w500"+str(data.get("poster_path"))
-    }
+from movie_api import get_movie_details,get_trailer,get_trending
+from recommender import recommend
+from ui import hero,show_movie,recommendation_grid,movie_not_found
 
 
-def get_trailer(movie_id):
+st.set_page_config(
+page_title="Go Movie Discovery",
+layout="wide"
+)
 
-    url=f"https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key={API_KEY}"
+hero()
 
-    data=requests.get(url).json()
+movies = pickle.load(open("movies_list.pkl","rb"))
+movies = pd.DataFrame(movies)
 
-    if "results" in data:
+movie_titles = movies['title'].values
 
-        for video in data["results"]:
+search = st.text_input("🔎 Search Movie")
 
-            if video["type"]=="Trailer" and video["site"]=="YouTube":
+matches=[m for m in movie_titles if search.lower() in m.lower()]
 
-                return "https://www.youtube.com/watch?v="+video["key"]
+if search:
 
-    return None
+    if matches:
+
+        selected_movie=st.selectbox("Select Movie",matches)
+
+        movie_id=movies[movies['title']==selected_movie].iloc[0].id
+
+        details=get_movie_details(movie_id)
+
+        show_movie(details)
+
+        trailer=get_trailer(movie_id)
+
+        if trailer:
+
+            st.subheader("🎥 Trailer")
+
+            st.video(trailer)
+
+        if st.button("⭐ Recommend Similar Movies"):
+
+            names,ids=recommend(selected_movie)
+
+            posters=[]
+
+            for i in ids:
+
+                movie=get_movie_details(i)
+
+                posters.append(movie["poster"])
+
+            st.subheader("🍿 Recommended Movies")
+
+            recommendation_grid(names,posters)
+
+    else:
+
+        movie_not_found()
 
 
-def get_trending():
+# ---------- Trending ----------
 
-    url=f"https://api.themoviedb.org/3/trending/movie/week?api_key={API_KEY}"
+st.subheader("🔥 Trending Movies")
 
-    data=requests.get(url).json()
+trending=get_trending()
 
-    return data.get("results",[])
+cols=st.columns(5)
+
+for i,movie in enumerate(trending[:5]):
+
+    with cols[i]:
+
+        poster="https://image.tmdb.org/t/p/w500"+str(movie["poster_path"])
+
+        st.image(poster)
+
+        st.caption(movie["title"])
