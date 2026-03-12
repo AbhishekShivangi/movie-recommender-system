@@ -1,105 +1,77 @@
 import streamlit as st
 from api import *
+from ui import *
+from charts import *
+from components.cards import movie_row_scroll
 
 st.set_page_config(page_title="Go Movie Discovery",layout="wide")
 
-st.title("🎬 Go Movie Discovery Platform")
+# load CSS
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>",unsafe_allow_html=True)
 
-query=st.text_input("🔎 Search movie or actor")
+hero_banner()
+
+query=st.text_input("🔎 Search movie, actor, anime, series")
 
 if query:
 
-    results=search_multi(query)
+    results=search(query)
 
     if results:
 
         item=results[0]
 
-        # ---------- MOVIE ----------
         if item["media_type"]=="movie":
 
-            movie_id=item["id"]
-
-            movie=get_movie(movie_id)
-
-            poster="https://image.tmdb.org/t/p/w500"+str(movie["poster_path"])
+            m=movie(item["id"])
 
             col1,col2=st.columns([1,2])
 
             with col1:
-                st.image(poster,width=250)
+                st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
 
             with col2:
+                st.title(m["title"])
+                st.write("⭐ Rating:",m["vote_average"])
+                st.write(m["overview"])
 
-                st.subheader(movie["title"])
+            trailer_url=trailer(item["id"])
 
-                st.write("⭐ Rating:",movie["vote_average"])
+            trailer_preview(trailer_url)
 
-                st.write(movie["overview"])
+            st.subheader("📺 OTT Platforms")
 
-            trailer=get_trailer(movie_id)
+            providers=ott(item["id"])
 
-            if trailer:
-                st.video(trailer)
+            if providers and "flatrate" in providers:
 
-            # ---------- OTT ----------
-            st.subheader("📺 Available On")
+                for p in providers["flatrate"]:
+                    st.write(p["provider_name"])
 
-            ott=get_ott(movie_id)
+            movie_row_scroll("🍿 Recommended",recommendations(item["id"]))
 
-            if ott:
-
-                if "flatrate" in ott:
-
-                    for p in ott["flatrate"]:
-
-                        st.write(p["provider_name"])
-
-            else:
-
-                st.write("OTT info not available")
-
-            # ---------- RECOMMENDED ----------
-            st.subheader("🍿 Recommended Movies")
-
-            rec=get_movie_recommendations(movie_id)
-
-            cols=st.columns(5)
-
-            for i,m in enumerate(rec[:10]):
-
-                with cols[i%5]:
-
-                    poster="https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
-
-                    st.image(poster)
-
-                    st.caption(m["title"])
-
-
-        # ---------- ACTOR ----------
         if item["media_type"]=="person":
 
-            actor_id=item["id"]
+            st.title(item["name"])
 
-            st.subheader(item["name"])
+            movie_row_scroll("🎬 Movies",actor_movies(item["id"]))
 
-            movies=get_actor_movies(actor_id)
 
-            st.subheader("🎬 Movies by this actor")
+movie_row_scroll("🔥 Trending Movies",trending())
 
-            cols=st.columns(5)
+movie_row_scroll("⭐ Popular Movies",popular())
 
-            for i,m in enumerate(movies[:10]):
+movie_row_scroll("🇮🇳 Bollywood",indian("hi"))
 
-                with cols[i%5]:
+movie_row_scroll("🎬 Tollywood",indian("te"))
 
-                    poster="https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
+movie_row_scroll("🌟 Sandalwood",indian("kn"))
 
-                    st.image(poster)
+movie_row_scroll("📺 TV Series",tv())
 
-                    st.caption(m["title"])
+movie_row_scroll("🍥 Anime",anime())
 
-    else:
+st.header("📊 Popularity Chart")
 
-        st.error("Not found")
+popularity_chart(trending())
