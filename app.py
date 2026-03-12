@@ -166,3 +166,20 @@ for i,m in enumerate(anime()[:5]):
 
         st.caption(m["name"])
 
+
+#korean Dreams
+st.subheader("🇰🇷 Korean Dramas")
+
+cols = st.columns(5)
+
+for i,m in enumerate(korean()[:5]):
+
+    with cols[i]:
+
+        poster="https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
+
+        st.image(poster)
+
+        st.caption(m["name"])
+
+
