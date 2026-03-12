@@ -1,121 +1,104 @@
 import streamlit as st
-import pickle
-import pandas as pd
-
-from movie_api import search_movie, get_movie_details, get_trailer, get_trending, get_upcoming
-from recommender import recommend
+from movie_api import *
 
 st.set_page_config(page_title="Go Movie Discovery", layout="wide")
 
 st.title("🎬 Go Movie Discovery Platform")
 
-# ---------- Load dataset ----------
-movies = pickle.load(open("movies_list.pkl","rb"))
-movies = pd.DataFrame(movies)
+mode = st.radio(
+    "Search Type",
+    ["Movie", "Actor"]
+)
+
+# ---------- MOVIE SEARCH ----------
+if mode == "Movie":
+
+    query = st.text_input("🔎 Search Movie")
+
+    if query:
+
+        results = search_movie(query)
+
+        if results:
+
+            movie = results[0]
+
+            movie_id = movie["id"]
+
+            details = get_movie_details(movie_id)
+
+            col1, col2 = st.columns([1,2])
+
+            with col1:
+                st.image(details["poster"], width=250)
+
+            with col2:
+
+                st.subheader(details["title"])
+
+                st.write("⭐ Rating:", details["rating"])
+
+                st.write(details["overview"])
+
+            trailer = get_trailer(movie_id)
+
+            if trailer:
+
+                st.subheader("🎥 Trailer")
+
+                st.video(trailer)
+
+            # OTT
+            st.subheader("📺 Watch On")
+
+            providers = get_ott(movie_id)
+
+            if providers:
+
+                st.write(providers)
+
+            else:
+
+                st.write("OTT info not available")
+
+        else:
+
+            st.error("Movie not found")
 
 
-# ---------- SEARCH ----------
-query = st.text_input("🔎 Search Movie")
+# ---------- ACTOR SEARCH ----------
+if mode == "Actor":
 
-if query:
+    actor = st.text_input("👨‍🎤 Search Actor")
 
-    results = search_movie(query)
+    if actor:
 
-    if results:
+        results = search_actor(actor)
 
-        movie = results[0]
+        if results:
 
-        movie_id = movie["id"]
+            actor_data = results[0]
 
-        details = get_movie_details(movie_id)
+            actor_id = actor_data["id"]
 
-        col1, col2 = st.columns([1,2])
+            st.subheader(actor_data["name"])
 
-        with col1:
-            st.image(details["poster"], width=250)
+            movies = get_actor_movies(actor_id)
 
-        with col2:
-
-            st.subheader(details["title"])
-
-            st.write("⭐ Rating:", details["rating"])
-
-            st.write(details["overview"])
-
-        # ---------- TRAILER ----------
-        trailer = get_trailer(movie_id)
-
-        if trailer:
-
-            st.subheader("🎥 Trailer")
-
-            st.video(trailer)
-
-        # ---------- RECOMMEND ----------
-        st.subheader("🍿 Recommended Movies")
-
-        try:
-
-            names, ids = recommend(details["title"])
-
-            posters = []
-
-            for i in ids:
-
-                movie_data = get_movie_details(i)
-
-                posters.append(movie_data["poster"])
+            st.subheader("🎬 Movies")
 
             cols = st.columns(5)
 
-            for i in range(5):
+            for i, m in enumerate(movies[:10]):
 
-                with cols[i]:
+                with cols[i % 5]:
 
-                    st.image(posters[i])
+                    poster = "https://image.tmdb.org/t/p/w500" + str(m["poster_path"])
 
-                    st.caption(names[i])
+                    st.image(poster)
 
-        except:
+                    st.caption(m["title"])
 
-            st.write("No recommendations available.")
+        else:
 
-    else:
-
-        st.error("Movie not found")
-
-
-# ---------- Trending ----------
-st.subheader("🔥 Trending Movies")
-
-trending = get_trending()
-
-cols = st.columns(5)
-
-for i,m in enumerate(trending[:5]):
-
-    with cols[i]:
-
-        poster = "https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
-
-        st.image(poster)
-
-        st.caption(m["title"])
-
-
-# ---------- Upcoming ----------
-st.subheader("🎬 Upcoming Movies")
-
-upcoming = get_upcoming()
-
-cols = st.columns(5)
-
-for i,m in enumerate(upcoming[:5]):
-
-    with cols[i]:
-
-        poster = "https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
-
-        st.image(poster)
-
-        st.caption(m["title"])
+            st.error("Actor not found")
