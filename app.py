@@ -16,56 +16,66 @@ st.markdown("""
 </div>
 """,unsafe_allow_html=True)
 
-query = st.text_input("🔎 Search Movie or Actor")
+query = st.text_input("🔎 Search Movie, Actor, Series, Anime")
 
 if query:
 
-    results = search_movie(query)
+    results = search_multi(query)
 
     if results:
 
         item = results[0]
 
-        if item["media_type"]=="movie":
+        media = item["media_type"]
 
-            m = get_movie_details(item["id"])
+        # MOVIE
+        if media == "movie":
 
-            col1,col2 = st.columns([1,2])
+            movie_id = item["id"]
 
-            with col1:
-                st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
+            details = get_movie_details(movie_id)
 
-            with col2:
-                st.title(m["title"])
-                st.write("⭐ Rating:",m["vote_average"])
-                st.write(m["overview"])
+            st.image("https://image.tmdb.org/t/p/w500"+str(details["poster_path"]))
 
-            trailer=get_trailer(item["id"])
+            st.title(details["title"])
 
-            if trailer:
-                st.video(trailer)
+            st.write("⭐ Rating:", details["vote_average"])
 
-            st.subheader("🍿 Recommended Movies")
+            st.write(details["overview"])
 
-            try:
+        # ACTOR
+        elif media == "person":
 
-                names,ids=recommend(m["title"])
+            st.title(item["name"])
 
-                cols=st.columns(5)
+            actor_id = item["id"]
 
-                for i in range(5):
+            movies = get_actor_movies(actor_id)
 
-                    with cols[i]:
+            st.subheader("Movies")
 
-                        movie=get_movie_details(ids[i])
+            cols = st.columns(5)
 
-                        st.image("https://image.tmdb.org/t/p/w500"+str(movie["poster_path"]))
+            for i,m in enumerate(movies[:5]):
 
-                        st.caption(names[i])
+                with cols[i]:
 
-            except:
+                    poster="https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
 
-                st.write("No recommendation available.")
+                    st.image(poster)
+
+                    st.caption(m["title"])
+
+        # TV / SERIES
+        elif media == "tv":
+
+            st.title(item["name"])
+
+            poster="https://image.tmdb.org/t/p/w500"+str(item["poster_path"])
+
+            st.image(poster)
+
+            st.write(item["overview"])
 
 # trending
 st.subheader("🔥 Trending Movies")
@@ -155,3 +165,4 @@ for i,m in enumerate(anime()[:5]):
         st.image("https://image.tmdb.org/t/p/w500"+str(m["poster_path"]))
 
         st.caption(m["name"])
+
