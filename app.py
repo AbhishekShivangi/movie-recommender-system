@@ -1,18 +1,26 @@
 import streamlit as st
 from api import *
-from ui import *
-from charts import *
-from components.cards import movie_row_scroll
+from components.cards import movie_row
 
 st.set_page_config(page_title="Go Movie Discovery",layout="wide")
 
-# load CSS
-with open("style.css") as f:
+# load css
+with open("assets/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>",unsafe_allow_html=True)
 
-hero_banner()
 
-query=st.text_input("🔎 Search movie, actor, anime, series")
+st.markdown(
+"""
+<div class='hero'>
+<h1 style='color:red'>🎬 Go Movie Discovery</h1>
+<p style='color:white'>Discover movies, actors, anime and series</p>
+</div>
+""",
+unsafe_allow_html=True
+)
+
+query=st.text_input("🔎 Search movie or actor")
+
 
 if query:
 
@@ -36,42 +44,25 @@ if query:
                 st.write("⭐ Rating:",m["vote_average"])
                 st.write(m["overview"])
 
-            trailer_url=trailer(item["id"])
-
-            trailer_preview(trailer_url)
-
-            st.subheader("📺 OTT Platforms")
-
-            providers=ott(item["id"])
-
-            if providers and "flatrate" in providers:
-
-                for p in providers["flatrate"]:
-                    st.write(p["provider_name"])
-
-            movie_row_scroll("🍿 Recommended",recommendations(item["id"]))
+            movie_row("🍿 Recommended",recommendations(item["id"]))
 
         if item["media_type"]=="person":
 
             st.title(item["name"])
 
-            movie_row_scroll("🎬 Movies",actor_movies(item["id"]))
+            movie_row("🎬 Movies",actor_movies(item["id"]))
 
 
-movie_row_scroll("🔥 Trending Movies",trending())
+movie_row("🔥 Trending Movies",trending())
 
-movie_row_scroll("⭐ Popular Movies",popular())
+movie_row("⭐ Popular Movies",popular())
 
-movie_row_scroll("🇮🇳 Bollywood",indian("hi"))
+movie_row("🇮🇳 Bollywood",indian("hi"))
 
-movie_row_scroll("🎬 Tollywood",indian("te"))
+movie_row("🎬 Tollywood",indian("te"))
 
-movie_row_scroll("🌟 Sandalwood",indian("kn"))
+movie_row("🌟 Sandalwood",indian("kn"))
 
-movie_row_scroll("📺 TV Series",tv())
+movie_row("📺 TV Series",tv())
 
-movie_row_scroll("🍥 Anime",anime())
-
-st.header("📊 Popularity Chart")
-
-popularity_chart(trending())
+movie_row("🍥 Anime",anime())
