@@ -76,6 +76,16 @@ def search_multi(query):
     url = f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
 
     data = requests.get(url).json()
+    
+
+def get_actor_movies(actor_id):
+
+    url = f"https://api.themoviedb.org/3/person/{actor_id}/movie_credits?api_key={API_KEY}"
+
+    data = requests.get(url).json()
+
+    return data.get("cast", [])
 
     return data.get("results", [])
+
 
