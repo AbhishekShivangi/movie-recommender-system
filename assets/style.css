@@ -1,0 +1,39 @@
+body {
+    background-color: #0e1117;
+}
+
+.hero-banner {
+    background-image: linear-gradient(to right, black, transparent),
+    url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba");
+    background-size: cover;
+    padding: 80px;
+    border-radius: 10px;
+}
+
+.movie-card {
+    position: relative;
+    transition: transform 0.3s;
+}
+
+.movie-card:hover {
+    transform: scale(1.1);
+}
+
+.movie-row {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+}
+
+.movie-row img {
+    border-radius: 8px;
+    height: 300px;
+}
+
+.movie-row::-webkit-scrollbar {
+    height: 8px;
+}
+
+.movie-row::-webkit-scrollbar-thumb {
+    background: red;
+}
