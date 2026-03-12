@@ -1,6 +1,6 @@
 import requests
 
-API_KEY="YOUR_TMDB_API_KEY"
+API_KEY="624e1be491b94af1717b2ac8e121b5f1"
 
 def get_movie_details(movie_id):
 
@@ -41,3 +41,4 @@ def get_trending():
     data=requests.get(url).json()
 
     return data.get("results",[])
+
