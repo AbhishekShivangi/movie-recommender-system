@@ -14,11 +14,11 @@ st.write("Find movies similar to your favorite ones")
 # Load movies data
 movies = pickle.load(open("movies_list.pkl", "rb"))
 
-# Convert to DataFrame if needed
+# Convert to DataFrame
 movies = pd.DataFrame(movies)
 
-# Convert list tags to string
-movies['tags'] = movies['tags'].apply(lambda x: " ".join(x))
+# Convert tags safely to string
+movies['tags'] = movies['tags'].astype(str)
 
 movie_list = movies['title'].values
 
