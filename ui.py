@@ -2,13 +2,16 @@ import streamlit as st
 
 def hero():
 
-    st.markdown("""
+    st.markdown(
+    """
     <h1 style='text-align:center;color:#ff4b4b'>
-    🎬 Go Movie Discovery
+    🎬 Go Movie Discovery Platform
     </h1>
-    """,unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+    )
 
-    st.write("Search movies, watch trailers, and get recommendations.")
+    st.write("Search movies, watch trailers and get recommendations.")
 
 
 def show_movie(details):
