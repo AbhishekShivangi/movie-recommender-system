@@ -5,14 +5,53 @@ import pandas as pd
 from movie_api import search_movie, get_movie_details, get_trailer, get_trending, get_upcoming
 from recommender import recommend
 
-
 st.set_page_config(page_title="Go Movie Discovery", layout="wide")
 
 st.title("🎬 Go Movie Discovery Platform")
 
-# -------- Search --------
+# ---------- Load dataset ----------
+movies = pickle.load(open("movies_list.pkl","rb"))
+movies = pd.DataFrame(movies)
 
-query = st.text_input("🔎 Search Movie")
+movie_titles = movies['title'].values
+
+
+# ---------- SELECT MOVIE ----------
+selected_movie = st.selectbox(
+    "Select Movie for Recommendation",
+    movie_titles
+)
+
+# ---------- RECOMMEND BUTTON ----------
+if st.button("⭐ Recommend Movies"):
+
+    names, ids = recommend(selected_movie)
+
+    posters = []
+
+    for i in ids:
+
+        movie = get_movie_details(i)
+
+        posters.append(movie["poster"])
+
+    st.subheader("🍿 Recommended Movies")
+
+    cols = st.columns(5)
+
+    for i in range(5):
+
+        with cols[i]:
+
+            st.image(posters[i])
+
+            st.caption(names[i])
+
+
+# ---------- SEARCH MOVIE ----------
+st.subheader("🔎 Search Movie")
+
+query = st.text_input("Type movie name")
 
 if query:
 
@@ -26,7 +65,7 @@ if query:
 
         details = get_movie_details(movie_id)
 
-        col1, col2 = st.columns([1, 2])
+        col1, col2 = st.columns([1,2])
 
         with col1:
             st.image(details["poster"], width=250)
@@ -52,38 +91,36 @@ if query:
         st.error("Movie not found")
 
 
-# -------- Trending --------
-
+# ---------- Trending ----------
 st.subheader("🔥 Trending Movies")
 
 trending = get_trending()
 
 cols = st.columns(5)
 
-for i, m in enumerate(trending[:5]):
+for i,m in enumerate(trending[:5]):
 
     with cols[i]:
 
-        poster = "https://image.tmdb.org/t/p/w500" + str(m["poster_path"])
+        poster = "https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
 
         st.image(poster)
 
         st.caption(m["title"])
 
 
-# -------- Upcoming --------
-
+# ---------- Upcoming ----------
 st.subheader("🎬 Upcoming Movies")
 
 upcoming = get_upcoming()
 
 cols = st.columns(5)
 
-for i, m in enumerate(upcoming[:5]):
+for i,m in enumerate(upcoming[:5]):
 
     with cols[i]:
 
-        poster = "https://image.tmdb.org/t/p/w500" + str(m["poster_path"])
+        poster = "https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
 
         st.image(poster)
 
