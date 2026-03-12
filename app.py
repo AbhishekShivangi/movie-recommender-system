@@ -2,6 +2,8 @@ import streamlit as st
 import pickle
 import requests
 import certifi
+import zipfile
+import os
 
 # Page configuration
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
@@ -10,20 +12,32 @@ st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wid
 st.title("🎬 Movie Recommender System")
 st.write("Find movies similar to your favorite ones")
 
-# Load data
+# ---------- Load Data ----------
+
+# Load movies list
 movies = pickle.load(open("movies_list.pkl", "rb"))
+
+# Extract similarity.pkl if zipped
+if not os.path.exists("similarity.pkl"):
+    with zipfile.ZipFile("similarity.zip", "r") as zip_ref:
+        zip_ref.extractall()
+
+# Load similarity matrix
 similarity = pickle.load(open("similarity.pkl", "rb"))
 
 movies_list = movies['title'].values
 
 
-# Fetch movie poster
+# ---------- Fetch Poster ----------
+@st.cache_data
 def fetch_poster(movie_id):
+
     url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=c7ec19ffdd3279641fb606d19ceb9bb1&language=en-US"
 
     try:
-        data = requests.get(url, verify=certifi.where())
-        data = data.json()
+        response = requests.get(url, verify=certifi.where(), timeout=5)
+        data = response.json()
+
         poster_path = data.get("poster_path")
 
         if poster_path:
@@ -35,9 +49,11 @@ def fetch_poster(movie_id):
         return "https://via.placeholder.com/500x750?text=Error"
 
 
-# Recommendation function
+# ---------- Recommendation Function ----------
 def recommend(movie):
+
     index = movies[movies['title'] == movie].index[0]
+
     distances = similarity[index]
 
     movie_list = sorted(
@@ -50,22 +66,26 @@ def recommend(movie):
     recommended_posters = []
 
     for i in movie_list:
+
         movie_id = movies.iloc[i[0]]['id']
 
         recommended_movies.append(movies.iloc[i[0]]['title'])
+
         recommended_posters.append(fetch_poster(movie_id))
 
     return recommended_movies, recommended_posters
 
 
-# Dropdown selection
+# ---------- UI Dropdown ----------
 selected_movie = st.selectbox(
     "Select a movie",
     movies_list
 )
 
-# Recommendation button
+
+# ---------- Button ----------
 if st.button("Recommend Movies"):
+
     names, posters = recommend(selected_movie)
 
     col1, col2, col3, col4, col5 = st.columns(5)
