@@ -5,23 +5,24 @@ API_KEY="624e1be491b94af1717b2ac8e121b5f1"
 IMG="https://image.tmdb.org/t/p/w500"
 
 
-def search_movie(query):
+# SEARCH MOVIE / ACTOR / SERIES
+def search_multi(query):
 
     url=f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
 
     return requests.get(url).json().get("results",[])
 
 
-def get_movie_details(movie_id):
+# MOVIE DETAILS
+def movie_details(movie_id):
 
     url=f"https://api.themoviedb.org/3/movie/{movie_id}?api_key={API_KEY}"
 
-    data=requests.get(url).json()
-
-    return data
+    return requests.get(url).json()
 
 
-def get_trailer(movie_id):
+# TRAILER
+def trailer(movie_id):
 
     url=f"https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key={API_KEY}"
 
@@ -36,64 +37,71 @@ def get_trailer(movie_id):
     return None
 
 
+# OTT PLATFORMS
+def ott(movie_id):
+
+    url=f"https://api.themoviedb.org/3/movie/{movie_id}/watch/providers?api_key={API_KEY}"
+
+    data=requests.get(url).json()
+
+    providers=[]
+
+    if "results" in data and "IN" in data["results"]:
+
+        p=data["results"]["IN"]
+
+        if "flatrate" in p:
+
+            for i in p["flatrate"]:
+
+                providers.append(i["provider_name"])
+
+    return providers
+
+
+# TRENDING
 def trending():
 
     url=f"https://api.themoviedb.org/3/trending/movie/week?api_key={API_KEY}"
 
-    return requests.get(url).json().get("results",[])
+    return requests.get(url).json()["results"]
 
 
+# UPCOMING
 def upcoming():
 
     url=f"https://api.themoviedb.org/3/movie/upcoming?api_key={API_KEY}"
 
-    return requests.get(url).json().get("results",[])
+    return requests.get(url).json()["results"]
 
 
-def indian(lang):
+# TOP RATED
+def top_rated():
 
-    url=f"https://api.themoviedb.org/3/discover/movie?api_key={API_KEY}&with_original_language={lang}"
+    url=f"https://api.themoviedb.org/3/movie/top_rated?api_key={API_KEY}"
 
-    return requests.get(url).json().get("results",[])
+    return requests.get(url).json()["results"]
 
 
+# INDIAN MOVIES
+def indian():
+
+    url=f"https://api.themoviedb.org/3/discover/movie?api_key={API_KEY}&region=IN"
+
+    return requests.get(url).json()["results"]
+
+
+# TV SERIES
 def tv():
 
     url=f"https://api.themoviedb.org/3/discover/tv?api_key={API_KEY}"
 
-    return requests.get(url).json().get("results",[])
+    return requests.get(url).json()["results"]
 
 
+# ANIME
 def anime():
 
     url=f"https://api.themoviedb.org/3/discover/tv?api_key={API_KEY}&with_genres=16"
 
-    return requests.get(url).json().get("results",[])
-    
-
-def search_multi(query):
-
-    url = f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
-
-    data = requests.get(url).json()
-    
-
-def get_actor_movies(actor_id):
-
-    url = f"https://api.themoviedb.org/3/person/{actor_id}/movie_credits?api_key={API_KEY}"
-
-    data = requests.get(url).json()
-
-    return data.get("cast", [])
-
-    return data.get("results", [])
-
-
-def korean():
-
-    url=f"https://api.themoviedb.org/3/discover/tv?api_key={API_KEY}&with_original_language=ko"
-
-    return requests.get(url).json().get("results",[])
-
-
-
+    return requests.get(url).json()["results"]
