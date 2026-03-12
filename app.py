@@ -1,107 +1,169 @@
 import streamlit as st
 from movie_api import *
-from recommender import recommend
+import plotly.express as px
 
-st.set_page_config(page_title="Go Movie Discovery", layout="wide")
+st.set_page_config(page_title="Go Movie Discovery",layout="wide")
 
-st.title("🎬 Go Movie Discovery Platform")
+st.title("🎬 Go Movie Discovery")
 
-# SEARCH BAR
-query = st.text_input("🔎 Search Movie, Actor, Series")
+# SEARCH
+query=st.text_input("🔎 Search Movie / Actor / Series")
 
-# ------------------------------------
-# IF USER SEARCHES
-# ------------------------------------
+# -----------------------
+# SEARCH RESULT
+# -----------------------
 
 if query:
 
-    results = search_multi(query)
+    results=search_multi(query)
 
     if results:
 
-        item = results[0]
+        item=results[0]
 
-        if item["media_type"] == "movie":
+        if item["media_type"]=="movie":
 
-            movie_id = item["id"]
+            m=movie_details(item["id"])
 
-            details = get_movie_details(movie_id)
-
-            col1, col2 = st.columns([1,2])
+            col1,col2=st.columns([1,2])
 
             with col1:
-                st.image("https://image.tmdb.org/t/p/w500"+str(details["poster_path"]))
+
+                st.image(IMG+m["poster_path"])
 
             with col2:
-                st.title(details["title"])
-                st.write("⭐ Rating:", details["vote_average"])
-                st.write(details["overview"])
 
-            trailer = get_trailer(movie_id)
+                st.header(m["title"])
 
-            if trailer:
-                st.subheader("🎥 Trailer")
-                st.video(trailer)
+                st.write("⭐ Rating:",m["vote_average"])
 
-            # RECOMMENDATIONS
-            st.subheader("🍿 Recommended Movies")
+                st.write(m["overview"])
 
-            try:
+            # TRAILER
+            t=trailer(item["id"])
 
-                names, ids = recommend(details["title"])
+            if t:
 
-                cols = st.columns(5)
+                st.video(t)
 
-                for i in range(5):
+            # OTT
+            st.subheader("📺 Available On")
 
-                    with cols[i]:
+            providers=ott(item["id"])
 
-                        movie = get_movie_details(ids[i])
+            if providers:
 
-                        st.image("https://image.tmdb.org/t/p/w500"+str(movie["poster_path"]))
+                for p in providers:
 
-                        st.caption(names[i])
+                    st.write("•",p)
 
-            except:
-                st.write("No recommendation available.")
+            else:
+
+                st.write("No OTT data")
 
     else:
+
         st.error("Movie not found")
 
-# ------------------------------------
-# IF NO SEARCH → HOMEPAGE
-# ------------------------------------
+# -----------------------
+# HOMEPAGE
+# -----------------------
 
 else:
 
-    st.subheader("🔥 Trending Movies")
+    # TRENDING
+    st.subheader("🔥 Trending")
 
-    trending_movies = trending()
+    cols=st.columns(6)
 
-    cols = st.columns(5)
-
-    for i,m in enumerate(trending_movies[:5]):
-
-        with cols[i]:
-
-            poster = "https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
-
-            st.image(poster)
-
-            st.caption(m["title"])
-
-    st.subheader("🎬 Upcoming Movies")
-
-    upcoming_movies = upcoming()
-
-    cols = st.columns(5)
-
-    for i,m in enumerate(upcoming_movies[:5]):
+    for i,m in enumerate(trending()[:6]):
 
         with cols[i]:
 
-            poster = "https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
-
-            st.image(poster)
+            st.image(IMG+m["poster_path"])
 
             st.caption(m["title"])
+
+
+    # UPCOMING
+    st.subheader("🎬 Upcoming")
+
+    cols=st.columns(6)
+
+    for i,m in enumerate(upcoming()[:6]):
+
+        with cols[i]:
+
+            st.image(IMG+m["poster_path"])
+
+            st.caption(m["title"])
+
+
+    # TOP RATED
+    st.subheader("⭐ Top Rated")
+
+    cols=st.columns(6)
+
+    for i,m in enumerate(top_rated()[:6]):
+
+        with cols[i]:
+
+            st.image(IMG+m["poster_path"])
+
+            st.caption(m["title"])
+
+
+    # INDIAN MOVIES
+    st.subheader("🇮🇳 Indian Movies")
+
+    cols=st.columns(6)
+
+    for i,m in enumerate(indian()[:6]):
+
+        with cols[i]:
+
+            st.image(IMG+m["poster_path"])
+
+            st.caption(m["title"])
+
+
+    # TV
+    st.subheader("📺 TV Series")
+
+    cols=st.columns(6)
+
+    for i,m in enumerate(tv()[:6]):
+
+        with cols[i]:
+
+            st.image(IMG+m["poster_path"])
+
+            st.caption(m["name"])
+
+
+    # ANIME
+    st.subheader("🍥 Anime")
+
+    cols=st.columns(6)
+
+    for i,m in enumerate(anime()[:6]):
+
+        with cols[i]:
+
+            st.image(IMG+m["poster_path"])
+
+            st.caption(m["name"])
+
+
+    # POPULARITY CHART
+    st.subheader("📊 Popularity Chart")
+
+    movies=trending()[:10]
+
+    names=[m["title"] for m in movies]
+
+    scores=[m["popularity"] for m in movies]
+
+    fig=px.bar(x=names,y=scores)
+
+    st.plotly_chart(fig)
