@@ -4,45 +4,70 @@ import pandas as pd
 import requests
 from sklearn.metrics.pairwise import cosine_similarity
 
+# ---------- PAGE CONFIG ----------
 st.set_page_config(page_title="Go Movie Recommender", page_icon="🎬", layout="wide")
 
-# ---------- Custom CSS ----------
+# ---------- CUSTOM CSS ----------
 st.markdown("""
 <style>
 
-.title{
-text-align:center;
-font-size:50px;
-font-weight:bold;
-color:#ff4b4b;
-}
+body { background-color:#0e1117; }
 
-.subtitle{
-text-align:center;
-font-size:18px;
-color:gray;
-margin-bottom:30px;
-}
-
-.stButton>button{
-background-color:#ff4b4b;
+.hero {
+height:280px;
+background-image: linear-gradient(to right, rgba(0,0,0,0.85), rgba(0,0,0,0.3)),
+url("https://images.unsplash.com/photo-1489599849927-2ee91cede3ba");
+background-size: cover;
+border-radius:12px;
+padding:30px;
 color:white;
+}
+
+.hero h1{
+font-size:48px;
+margin-bottom:5px;
+}
+
+.hero p{
 font-size:18px;
-border-radius:10px;
-padding:10px 20px;
+color:#dddddd;
 }
 
 .poster{
 border-radius:10px;
+transition:0.3s;
+}
+
+.poster:hover{
+transform:scale(1.05);
+}
+
+.stButton>button{
+background-color:#e50914;
+color:white;
+font-size:18px;
+border-radius:8px;
+padding:10px 25px;
+}
+
+.card{
+text-align:center;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<p class="title">🎬 Go Movie Recommender</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Search a movie and discover similar ones</p>', unsafe_allow_html=True)
+# ---------- HERO INTRO ----------
+st.markdown("""
+<div class="hero">
+<h1>🎬 Go Movie Recommender</h1>
+<p>Discover movies and series you'll love. Type a title to start exploring!</p>
+</div>
+""", unsafe_allow_html=True)
 
-# ---------- Load Data ----------
+st.write("")
+
+# ---------- LOAD DATA ----------
 movies = pickle.load(open("movies_list.pkl","rb"))
 movies = pd.DataFrame(movies)
 
@@ -52,18 +77,16 @@ similarity = cosine_similarity(vectors)
 
 movie_titles = movies['title'].values
 
-
-# ---------- Detect ID column ----------
+# detect movie id column
 if "movie_id" in movies.columns:
     id_column = "movie_id"
 else:
     id_column = "id"
 
 
-# ---------- Poster Function ----------
+# ---------- POSTER FUNCTION ----------
 @st.cache_data
 def fetch_poster(movie_id):
-
     try:
         url=f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=c7ec19ffdd3279641fb606d19ceb9bb1&language=en-US"
         data=requests.get(url,timeout=5).json()
@@ -79,7 +102,7 @@ def fetch_poster(movie_id):
         return "https://via.placeholder.com/300x450?text=Error"
 
 
-# ---------- Recommend ----------
+# ---------- RECOMMEND ----------
 def recommend(movie):
 
     index=movies[movies['title']==movie].index[0]
@@ -105,61 +128,69 @@ def recommend(movie):
     return names,posters
 
 
-# ---------- Search ----------
-search_movie=st.text_input("🔎 Type Movie Name")
+# ---------- SIDEBAR ----------
+st.sidebar.title("🎥 Options")
 
-matches=[title for title in movie_titles if search_movie.lower() in title.lower()]
+show_trending = st.sidebar.checkbox("Show Trending Movies")
+
+if show_trending:
+    st.sidebar.write("Trending movies feature coming soon!")
 
 
-if search_movie:
+# ---------- SEARCH ----------
+search_query = st.text_input("🔎 Search Movie or Series")
+
+matches = [m for m in movie_titles if search_query.lower() in m.lower()]
+
+if search_query:
 
     if matches:
 
-        selected_movie=st.selectbox("Select Movie",matches)
+        selected_movie = st.selectbox("Select Movie", matches)
 
-        movie_id=movies[movies['title']==selected_movie].iloc[0][id_column]
+        movie_id = movies[movies['title']==selected_movie].iloc[0][id_column]
 
-        poster=fetch_poster(movie_id)
+        poster = fetch_poster(movie_id)
 
         st.subheader("Selected Movie")
 
-        col1,col2=st.columns([1,2])
+        col1,col2 = st.columns([1,2])
 
         with col1:
-            st.image(poster,width=250)
+            st.image(poster,width=260)
 
         with col2:
             st.markdown(f"### {selected_movie}")
-            st.write("Click recommend to see similar movies.")
+            st.write("Click recommend to discover similar movies.")
 
         if st.button("🎬 Recommend Movies"):
 
             with st.spinner("Finding similar movies..."):
 
-                names,posters=recommend(selected_movie)
+                names,posters = recommend(selected_movie)
 
             st.subheader("Recommended Movies")
 
-            col1,col2,col3,col4,col5=st.columns(5)
+            c1,c2,c3,c4,c5 = st.columns(5)
 
-            with col1:
-                st.image(posters[0])
+            with c1:
+                st.image(posters[0], use_column_width=True)
                 st.caption(names[0])
 
-            with col2:
-                st.image(posters[1])
+            with c2:
+                st.image(posters[1], use_column_width=True)
                 st.caption(names[1])
 
-            with col3:
-                st.image(posters[2])
+            with c3:
+                st.image(posters[2], use_column_width=True)
                 st.caption(names[2])
 
-            with col4:
-                st.image(posters[3])
+            with c4:
+                st.image(posters[3], use_column_width=True)
                 st.caption(names[3])
 
-            with col5:
-                st.image(posters[4])
+            with c5:
+                st.image(posters[4], use_column_width=True)
                 st.caption(names[4])
 
     else:
