@@ -21,12 +21,12 @@ def recommend(movie):
         key=lambda x:x[1]
     )[1:6]
 
-    movie_ids=[]
     movie_titles=[]
+    movie_ids=[]
 
     for i in movie_indices:
 
-        movie_ids.append(movies.iloc[i[0]].id)
         movie_titles.append(movies.iloc[i[0]].title)
+        movie_ids.append(movies.iloc[i[0]].id)
 
-    return movie_titles, movie_ids
+    return movie_titles,movie_ids
