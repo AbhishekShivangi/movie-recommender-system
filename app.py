@@ -1,104 +1,105 @@
 import streamlit as st
-from movie_api import *
+from api import *
 
-st.set_page_config(page_title="Go Movie Discovery", layout="wide")
+st.set_page_config(page_title="Go Movie Discovery",layout="wide")
 
 st.title("🎬 Go Movie Discovery Platform")
 
-mode = st.radio(
-    "Search Type",
-    ["Movie", "Actor"]
-)
+query=st.text_input("🔎 Search movie or actor")
 
-# ---------- MOVIE SEARCH ----------
-if mode == "Movie":
+if query:
 
-    query = st.text_input("🔎 Search Movie")
+    results=search_multi(query)
 
-    if query:
+    if results:
 
-        results = search_movie(query)
+        item=results[0]
 
-        if results:
+        # ---------- MOVIE ----------
+        if item["media_type"]=="movie":
 
-            movie = results[0]
+            movie_id=item["id"]
 
-            movie_id = movie["id"]
+            movie=get_movie(movie_id)
 
-            details = get_movie_details(movie_id)
+            poster="https://image.tmdb.org/t/p/w500"+str(movie["poster_path"])
 
-            col1, col2 = st.columns([1,2])
+            col1,col2=st.columns([1,2])
 
             with col1:
-                st.image(details["poster"], width=250)
+                st.image(poster,width=250)
 
             with col2:
 
-                st.subheader(details["title"])
+                st.subheader(movie["title"])
 
-                st.write("⭐ Rating:", details["rating"])
+                st.write("⭐ Rating:",movie["vote_average"])
 
-                st.write(details["overview"])
+                st.write(movie["overview"])
 
-            trailer = get_trailer(movie_id)
+            trailer=get_trailer(movie_id)
 
             if trailer:
-
-                st.subheader("🎥 Trailer")
-
                 st.video(trailer)
 
-            # OTT
-            st.subheader("📺 Watch On")
+            # ---------- OTT ----------
+            st.subheader("📺 Available On")
 
-            providers = get_ott(movie_id)
+            ott=get_ott(movie_id)
 
-            if providers:
+            if ott:
 
-                st.write(providers)
+                if "flatrate" in ott:
+
+                    for p in ott["flatrate"]:
+
+                        st.write(p["provider_name"])
 
             else:
 
                 st.write("OTT info not available")
 
-        else:
+            # ---------- RECOMMENDED ----------
+            st.subheader("🍿 Recommended Movies")
 
-            st.error("Movie not found")
+            rec=get_movie_recommendations(movie_id)
 
+            cols=st.columns(5)
 
-# ---------- ACTOR SEARCH ----------
-if mode == "Actor":
+            for i,m in enumerate(rec[:10]):
 
-    actor = st.text_input("👨‍🎤 Search Actor")
+                with cols[i%5]:
 
-    if actor:
-
-        results = search_actor(actor)
-
-        if results:
-
-            actor_data = results[0]
-
-            actor_id = actor_data["id"]
-
-            st.subheader(actor_data["name"])
-
-            movies = get_actor_movies(actor_id)
-
-            st.subheader("🎬 Movies")
-
-            cols = st.columns(5)
-
-            for i, m in enumerate(movies[:10]):
-
-                with cols[i % 5]:
-
-                    poster = "https://image.tmdb.org/t/p/w500" + str(m["poster_path"])
+                    poster="https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
 
                     st.image(poster)
 
                     st.caption(m["title"])
 
-        else:
 
-            st.error("Actor not found")
+        # ---------- ACTOR ----------
+        if item["media_type"]=="person":
+
+            actor_id=item["id"]
+
+            st.subheader(item["name"])
+
+            movies=get_actor_movies(actor_id)
+
+            st.subheader("🎬 Movies by this actor")
+
+            cols=st.columns(5)
+
+            for i,m in enumerate(movies[:10]):
+
+                with cols[i%5]:
+
+                    poster="https://image.tmdb.org/t/p/w500"+str(m["poster_path"])
+
+                    st.image(poster)
+
+                    st.caption(m["title"])
+
+    else:
+
+        st.error("Not found")
