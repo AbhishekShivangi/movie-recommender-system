@@ -61,23 +61,23 @@ if query:
 # ----------------------------
 # STEP 2: SHOW TRENDING MOVIES
 # ----------------------------
+if not query:
 
-st.subheader("🔥 Trending Movies")
+    st.subheader("🔥 Trending Movies")
 
-movies = trending()
+    movies = trending()
 
-cols = st.columns(5)
+    cols = st.columns(5)
 
-for i, m in enumerate(movies[:5]):
+    for i, m in enumerate(movies[:5]):
 
-    with cols[i]:
+        with cols[i]:
 
-        st.image(IMG + str(m["poster_path"]))
+            st.image(IMG + str(m["poster_path"]))
 
-        if st.button(m["title"]):
+            if st.button(m["title"]):
 
-            st.session_state.selected_movie = m["id"]
-
+                st.session_state.selected_movie = m["id"]
 
 # ----------------------------------
 # STEP 3: MOVIE DETAIL PAGE
@@ -135,4 +135,5 @@ if st.session_state.selected_movie:
     else:
 
         st.write("OTT data not available")
+
 
