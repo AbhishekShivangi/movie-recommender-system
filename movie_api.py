@@ -69,3 +69,13 @@ def anime():
     url=f"https://api.themoviedb.org/3/discover/tv?api_key={API_KEY}&with_genres=16"
 
     return requests.get(url).json().get("results",[])
+    
+
+def search_multi(query):
+
+    url = f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
+
+    data = requests.get(url).json()
+
+    return data.get("results", [])
+
