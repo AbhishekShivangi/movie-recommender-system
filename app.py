@@ -12,9 +12,52 @@ if "selected_movie" not in st.session_state:
 
 
 # SEARCH BAR
+# SEARCH BAR
 query = st.text_input("🔎 Search Movie")
 
+# SEARCH RESULT
+if query:
 
+    results = search_multi(query)
+
+    if results:
+
+        item = results[0]
+
+        if item["media_type"] == "movie":
+
+            movie_id = item["id"]
+
+            m = movie_details(movie_id)
+
+            st.title(m["title"])
+
+            col1, col2 = st.columns([1,2])
+
+            with col1:
+                st.image(IMG + str(m["poster_path"]))
+
+            with col2:
+                st.write("⭐ Rating:", m["vote_average"])
+                st.write(m["overview"])
+
+            # TRAILER
+            t = trailer(movie_id)
+
+            if t:
+                st.subheader("🎥 Trailer")
+                st.video(t)
+
+            # OTT
+            providers = ott(movie_id)
+
+            st.subheader("📺 Available On")
+
+            if providers:
+                for p in providers:
+                    st.write("•", p)
+            else:
+                st.write("OTT data not available")
 # ----------------------------
 # STEP 2: SHOW TRENDING MOVIES
 # ----------------------------
@@ -92,3 +135,4 @@ if st.session_state.selected_movie:
     else:
 
         st.write("OTT data not available")
+
