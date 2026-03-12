@@ -2,33 +2,38 @@ import streamlit as st
 import pickle
 import requests
 import certifi
-import zipfile
+import gdown
 import os
 
-# Page configuration
-st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
+# ---------------- Page Settings ----------------
+st.set_page_config(
+    page_title="Movie Recommender System",
+    page_icon="🎬",
+    layout="wide"
+)
 
-# Title
 st.title("🎬 Movie Recommender System")
 st.write("Find movies similar to your favorite ones")
 
-# ---------- Load Data ----------
+# ---------------- Download similarity.pkl if missing ----------------
 
-# Load movies list
-movies = pickle.load(open("movies_list.pkl", "rb"))
+FILE_ID = "YOUR_FILE_ID"   # Replace with your Google Drive file id
+URL = f"https://drive.google.com/uc?id={FILE_ID}"
 
-# Extract similarity.pkl if zipped
 if not os.path.exists("similarity.pkl"):
-    with zipfile.ZipFile("similarity.zip", "r") as zip_ref:
-        zip_ref.extractall()
+    st.write("Downloading recommendation model... (first run only)")
+    gdown.download(URL, "similarity.pkl", quiet=False)
 
-# Load similarity matrix
+# ---------------- Load Data ----------------
+
+movies = pickle.load(open("movies_list.pkl", "rb"))
 similarity = pickle.load(open("similarity.pkl", "rb"))
 
 movies_list = movies['title'].values
 
 
-# ---------- Fetch Poster ----------
+# ---------------- Fetch Poster ----------------
+
 @st.cache_data
 def fetch_poster(movie_id):
 
@@ -49,7 +54,8 @@ def fetch_poster(movie_id):
         return "https://via.placeholder.com/500x750?text=Error"
 
 
-# ---------- Recommendation Function ----------
+# ---------------- Recommendation Function ----------------
+
 def recommend(movie):
 
     index = movies[movies['title'] == movie].index[0]
@@ -76,14 +82,14 @@ def recommend(movie):
     return recommended_movies, recommended_posters
 
 
-# ---------- UI Dropdown ----------
+# ---------------- UI ----------------
+
 selected_movie = st.selectbox(
     "Select a movie",
     movies_list
 )
 
 
-# ---------- Button ----------
 if st.button("Recommend Movies"):
 
     names, posters = recommend(selected_movie)
