@@ -50,3 +50,12 @@ def get_upcoming():
     data=requests.get(url).json()
 
     return data.get("results",[])
+
+def get_kannada_movies(page=1):
+
+    url=f"https://api.themoviedb.org/3/discover/movie?api_key={API_KEY}&with_original_language=kn&region=IN&page={page}"
+
+    data=requests.get(url).json()
+
+    return data.get("results",[])
+
