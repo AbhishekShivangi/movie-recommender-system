@@ -2,7 +2,7 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-from movie_api import get_movie_details,get_trailer,get_trending
+from movie_api import get_movie_details,get_trailer,get_trending,get_upcoming
 from recommender import recommend
 from ui import hero,show_movie,recommendation_grid,movie_not_found
 
@@ -64,7 +64,7 @@ if search:
         movie_not_found()
 
 
-# ---------- Trending ----------
+# ---------- Trending Movies ----------
 
 st.subheader("🔥 Trending Movies")
 
@@ -73,6 +73,25 @@ trending=get_trending()
 cols=st.columns(5)
 
 for i,movie in enumerate(trending[:5]):
+
+    with cols[i]:
+
+        poster="https://image.tmdb.org/t/p/w500"+str(movie["poster_path"])
+
+        st.image(poster)
+
+        st.caption(movie["title"])
+
+
+# ---------- Upcoming Movies ----------
+
+st.subheader("🎬 Upcoming Movies")
+
+upcoming=get_upcoming()
+
+cols=st.columns(5)
+
+for i,movie in enumerate(upcoming[:5]):
 
     with cols[i]:
 
