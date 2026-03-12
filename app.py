@@ -7,9 +7,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 
 st.title("🎬 Movie Recommender System")
-st.write("Search a movie to see its poster and recommendations.")
 
-# Load data
+# ---------- Load Data ----------
+
 movies = pickle.load(open("movies_list.pkl","rb"))
 movies = pd.DataFrame(movies)
 
@@ -20,6 +20,17 @@ similarity = cosine_similarity(vectors)
 movie_list = movies['title'].values
 
 
+# ---------- Detect movie id column ----------
+
+if "movie_id" in movies.columns:
+    id_column = "movie_id"
+elif "id" in movies.columns:
+    id_column = "id"
+else:
+    st.error("Movie ID column not found in dataset")
+    st.stop()
+
+
 # ---------- Fetch Poster ----------
 
 def fetch_poster(movie_id):
@@ -27,6 +38,7 @@ def fetch_poster(movie_id):
     try:
         url = f"https://api.themoviedb.org/3/movie/{movie_id}?api_key=c7ec19ffdd3279641fb606d19ceb9bb1&language=en-US"
         data = requests.get(url).json()
+
         poster_path = data.get("poster_path")
 
         if poster_path:
@@ -57,7 +69,7 @@ def recommend(movie):
 
     for i in movie_indices:
 
-        movie_id = movies.iloc[i[0]].id
+        movie_id = movies.iloc[i[0]][id_column]
 
         names.append(movies.iloc[i[0]].title)
         posters.append(fetch_poster(movie_id))
@@ -68,44 +80,30 @@ def recommend(movie):
 # ---------- UI ----------
 
 selected_movie = st.selectbox(
-    "Search movie",
+    "Search Movie",
     movie_list
 )
 
-# Show selected movie poster
-movie_id = movies[movies['title']==selected_movie].iloc[0].id
+# show selected movie poster
+movie_id = movies[movies['title']==selected_movie].iloc[0][id_column]
+
 poster = fetch_poster(movie_id)
 
 st.subheader("Selected Movie")
 st.image(poster, width=250)
 
 
-# ---------- Recommendation Button ----------
+# ---------- Recommend Button ----------
 
-if st.button("Recommend"):
+if st.button("Recommend Movies"):
 
     names, posters = recommend(selected_movie)
 
     st.subheader("Recommended Movies")
 
-    col1,col2,col3,col4,col5 = st.columns(5)
+    cols = st.columns(5)
 
-    with col1:
-        st.image(posters[0])
-        st.caption(names[0])
-
-    with col2:
-        st.image(posters[1])
-        st.caption(names[1])
-
-    with col3:
-        st.image(posters[2])
-        st.caption(names[2])
-
-    with col4:
-        st.image(posters[3])
-        st.caption(names[3])
-
-    with col5:
-        st.image(posters[4])
-        st.caption(names[4])
+    for i in range(5):
+        with cols[i]:
+            st.image(posters[i])
+            st.caption(names[i])
