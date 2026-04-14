@@ -53,10 +53,9 @@ A powerful **Netflix-style Movie & Series Discovery Web App** built using **Stre
 
 ## 📂 Project Structure
 movie-recommender-system
-│
-├── app.py # Main Streamlit app
-├── movie_api.py # API functions (TMDB)
-├── requirements.txt # Dependencies
+- app.py # Main Streamlit app
+- movie_api.py # API functions (TMDB)
+- requirements.txt # Dependencies
 
 ---
 
