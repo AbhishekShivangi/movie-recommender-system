@@ -1,139 +1,171 @@
 import streamlit as st
 from movie_api import *
-from movie_api import IMG
 
 st.set_page_config(page_title="Go Movie Discovery", layout="wide")
 
-st.title("🎬 Go Movie Discovery")
+st.title("🎬 Go Movie Discovery Platform")
 
-# STEP 1: session memory
-if "selected_movie" not in st.session_state:
-    st.session_state.selected_movie = None
-
-
+# -------------------------
 # SEARCH BAR
-# SEARCH BAR
-query = st.text_input("🔎 Search Movie")
+# -------------------------
+query = st.text_input("🔎 Search Movie / Actor / Series")
 
-# SEARCH RESULT
+# -------------------------
+# SEARCH SECTION (SAFE)
+# -------------------------
 if query:
 
     results = search_multi(query)
 
-    if results:
+    if not results:
+        st.error("❌ No results found")
+    else:
 
         item = results[0]
 
-        if item["media_type"] == "movie":
+        media = item.get("media_type")
 
-            movie_id = item["id"]
+        # -------------------------
+        # MOVIE
+        # -------------------------
+        if media == "movie":
+
+            movie_id = item.get("id")
 
             m = movie_details(movie_id)
 
-            st.title(m["title"])
+            if m:
 
-            col1, col2 = st.columns([1,2])
+                col1, col2 = st.columns([1,2])
 
-            with col1:
-                st.image(IMG + str(m["poster_path"]))
+                with col1:
+                    if m.get("poster_path"):
+                        st.image(IMG + m["poster_path"])
+                    else:
+                        st.write("No poster")
 
-            with col2:
-                st.write("⭐ Rating:", m["vote_average"])
-                st.write(m["overview"])
+                with col2:
+                    st.title(m.get("title","No title"))
+                    st.write("⭐ Rating:", m.get("vote_average","N/A"))
+                    st.write(m.get("overview","No description"))
 
-            # TRAILER
-            t = trailer(movie_id)
+                # Trailer
+                t = trailer(movie_id)
+                if t:
+                    st.subheader("🎥 Trailer")
+                    st.video(t)
 
-            if t:
-                st.subheader("🎥 Trailer")
-                st.video(t)
+                # OTT
+                st.subheader("📺 Available On")
 
-            # OTT
-            providers = ott(movie_id)
+                providers = ott(movie_id)
 
-            st.subheader("📺 Available On")
+                if providers:
+                    for p in providers:
+                        st.write("•", p)
+                else:
+                    st.write("No OTT data")
 
-            if providers:
-                for p in providers:
-                    st.write("•", p)
-            else:
-                st.write("OTT data not available")
-# ----------------------------
-# STEP 2: SHOW TRENDING MOVIES
-# ----------------------------
-if not query:
+        # -------------------------
+        # ACTOR
+        # -------------------------
+        elif media == "person":
+
+            st.title(item.get("name","Actor"))
+
+            actor_movies = get_actor_movies(item["id"])
+
+            st.subheader("🎬 Movies")
+
+            cols = st.columns(5)
+
+            for i, m in enumerate(actor_movies[:5]):
+
+                with cols[i]:
+
+                    if m.get("poster_path"):
+                        st.image(IMG + m["poster_path"])
+
+                    st.caption(m.get("title","No title"))
+
+        # -------------------------
+        # TV / ANIME
+        # -------------------------
+        elif media == "tv":
+
+            st.title(item.get("name","Series"))
+
+            if item.get("poster_path"):
+                st.image(IMG + item["poster_path"])
+
+            st.write(item.get("overview","No description"))
+
+# -------------------------
+# HOMEPAGE (NO SEARCH)
+# -------------------------
+else:
 
     st.subheader("🔥 Trending Movies")
 
-    movies = trending()
-
     cols = st.columns(5)
 
-    for i, m in enumerate(movies[:5]):
+    for i, m in enumerate(trending()[:5]):
 
         with cols[i]:
 
-            st.image(IMG + str(m["poster_path"]))
+            if m.get("poster_path"):
+                st.image(IMG + m["poster_path"])
 
-            if st.button(m["title"]):
+            st.caption(m.get("title"))
 
-                st.session_state.selected_movie = m["id"]
+    st.subheader("🎬 Upcoming Movies")
 
-# ----------------------------------
-# STEP 3: MOVIE DETAIL PAGE
-# ----------------------------------
+    cols = st.columns(5)
 
-if st.session_state.selected_movie:
+    for i, m in enumerate(upcoming()[:5]):
 
-    movie_id = st.session_state.selected_movie
+        with cols[i]:
 
-    m = movie_details(movie_id)
+            if m.get("poster_path"):
+                st.image(IMG + m["poster_path"])
 
-    st.divider()
+            st.caption(m.get("title"))
 
-    st.title(m["title"])
+    st.subheader("🇮🇳 Indian Movies")
 
-    col1, col2 = st.columns([1,2])
+    cols = st.columns(5)
 
-    with col1:
-        st.image(IMG + str(m["poster_path"]))
+    for i, m in enumerate(indian()[:5]):
 
-    with col2:
+        with cols[i]:
 
-        st.write("⭐ Rating:", m["vote_average"])
+            if m.get("poster_path"):
+                st.image(IMG + m["poster_path"])
 
-        st.write(m["overview"])
+            st.caption(m.get("title"))
 
+    st.subheader("📺 TV Series")
 
-# ----------------------------------
-# STEP 4: TRAILER
-# ----------------------------------
+    cols = st.columns(5)
 
-    t = trailer(movie_id)
+    for i, m in enumerate(tv()[:5]):
 
-    if t:
+        with cols[i]:
 
-        st.subheader("🎥 Trailer")
+            if m.get("poster_path"):
+                st.image(IMG + m["poster_path"])
 
-        st.video(t)
+            st.caption(m.get("name"))
 
+    st.subheader("🍥 Anime")
 
-# ----------------------------------
-# STEP 5: OTT PLATFORMS
-# ----------------------------------
+    cols = st.columns(5)
 
-    providers = ott(movie_id)
+    for i, m in enumerate(anime()[:5]):
 
-    st.subheader("📺 Available On")
+        with cols[i]:
 
-    if providers:
+            if m.get("poster_path"):
+                st.image(IMG + m["poster_path"])
 
-        for p in providers:
-
-            st.write("•", p)
-
-    else:
-
-        st.write("OTT data not available")
-
-
+            st.caption(m.get("name"))
