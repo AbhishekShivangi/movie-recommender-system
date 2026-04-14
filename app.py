@@ -1,127 +1,118 @@
 import streamlit as st
 import requests
 
-# -----------------------------
-# CONFIG
-# -----------------------------
+# ---------------- CONFIG ----------------
 API_KEY = "624e1be491b94af1717b2ac8e121b5f1"
 IMG = "https://image.tmdb.org/t/p/w500"
 
 st.set_page_config(page_title="Go Movie Discovery", layout="wide")
 
-# -----------------------------
-# CSS (simple animation)
-# -----------------------------
+# ---------------- CSS ----------------
 st.markdown("""
 <style>
-img {
-    border-radius:10px;
-    transition:0.3s;
-}
-img:hover {
-    transform:scale(1.08);
+.poster:hover {
+    transform: scale(1.1);
+    transition: 0.3s;
 }
 </style>
 """, unsafe_allow_html=True)
 
 st.title("🎬 Go Movie Discovery Platform")
 
-# -----------------------------
-# FUNCTIONS
-# -----------------------------
-def search_movie(query):
-    url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={query}"
+# ---------------- FUNCTIONS ----------------
+def search_multi(query):
+    url = f"https://api.themoviedb.org/3/search/multi?api_key={API_KEY}&query={query}"
     return requests.get(url).json().get("results", [])
 
-def search_actor(query):
-    url = f"https://api.themoviedb.org/3/search/person?api_key={API_KEY}&query={query}"
-    return requests.get(url).json().get("results", [])
+def get_details(id, type="movie"):
+    url = f"https://api.themoviedb.org/3/{type}/{id}?api_key={API_KEY}"
+    return requests.get(url).json()
 
-def get_trailer(movie_id):
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key={API_KEY}"
+def get_trailer(id, type="movie"):
+    url = f"https://api.themoviedb.org/3/{type}/{id}/videos?api_key={API_KEY}"
     data = requests.get(url).json()
     for v in data.get("results", []):
         if v["type"] == "Trailer":
             return "https://youtube.com/watch?v=" + v["key"]
     return None
 
-def get_ott(movie_id):
-    url = f"https://api.themoviedb.org/3/movie/{movie_id}/watch/providers?api_key={API_KEY}"
+def get_ott(id):
+    url = f"https://api.themoviedb.org/3/movie/{id}/watch/providers?api_key={API_KEY}"
     data = requests.get(url).json()
     providers = []
-
     if "IN" in data.get("results", {}):
-        p = data["results"]["IN"]
-
-        if "flatrate" in p:
-            for i in p["flatrate"]:
-                providers.append(i["provider_name"])
-
+        for p in data["results"]["IN"].get("flatrate", []):
+            providers.append(p["provider_name"])
     return providers
 
-def get_actor_movies(actor_id):
-    url = f"https://api.themoviedb.org/3/person/{actor_id}/movie_credits?api_key={API_KEY}"
-    return requests.get(url).json().get("cast", [])
-
 def trending():
-    url = f"https://api.themoviedb.org/3/trending/movie/week?api_key={API_KEY}"
+    url = f"https://api.themoviedb.org/3/trending/all/week?api_key={API_KEY}"
     return requests.get(url).json().get("results", [])
 
+# ---------------- SESSION ----------------
+if "selected" not in st.session_state:
+    st.session_state.selected = None
 
-# -----------------------------
-# SEARCH + SUGGESTIONS
-# -----------------------------
-query = st.text_input("🔎 Search Movie / Actor")
-
-suggestions = []
+# ---------------- SEARCH ----------------
+query = st.text_input("🔎 Search Movie / Series / Actor")
 
 if query:
-    results = search_movie(query)
+    results = search_multi(query)
 
-    for r in results[:5]:
-        suggestions.append(r["title"])
+    suggestions = [r.get("title") or r.get("name") for r in results[:5]]
 
-selected = None
+    if suggestions:
+        selected_name = st.selectbox("Suggestions", suggestions)
+    else:
+        selected_name = query
 
-if suggestions:
-    selected = st.selectbox("Suggestions", suggestions)
+    # Find selected item
+    selected_item = None
+    for r in results:
+        name = r.get("title") or r.get("name")
+        if name == selected_name:
+            selected_item = r
+            break
 
-final_query = selected if selected else query
+    if selected_item:
+        st.session_state.selected = selected_item
 
+# ---------------- DETAIL PAGE ----------------
+if st.session_state.selected:
 
-# -----------------------------
-# SEARCH RESULT
-# -----------------------------
-if final_query:
+    item = st.session_state.selected
 
-    results = search_movie(final_query)
+    media = item["media_type"]
+    id = item["id"]
 
-    if results:
+    details = get_details(id, media)
 
-        m = results[0]
+    title = details.get("title") or details.get("name")
 
-        col1, col2 = st.columns([1,2])
+    st.header(title)
 
-        with col1:
-            if m.get("poster_path"):
-                st.image(IMG + m["poster_path"])
+    col1, col2 = st.columns([1,2])
 
-        with col2:
-            st.title(m["title"])
-            st.write("⭐ Rating:", m.get("vote_average"))
-            st.write(m.get("overview"))
+    with col1:
+        if details.get("poster_path"):
+            st.image(IMG + details["poster_path"])
 
-        # 🎥 TRAILER
-        trailer = get_trailer(m["id"])
+    with col2:
+        st.write("⭐ Rating:", details.get("vote_average"))
+        st.write(details.get("overview"))
 
-        if trailer:
-            st.subheader("🎥 Trailer")
-            st.video(trailer)
+    # Trailer
+    t = get_trailer(id, media)
 
-        # 📺 OTT
+    if t:
+        st.subheader("🎥 Trailer")
+        st.video(t)
+
+    # OTT only for movies
+    if media == "movie":
         st.subheader("📺 Watch On")
 
-        providers = get_ott(m["id"])
+        providers = get_ott(id)
 
         if providers:
             for p in providers:
@@ -137,51 +128,30 @@ if final_query:
 
                 else:
                     st.write(p)
+
         else:
             st.write("No OTT data")
 
-    else:
-        st.error("Movie not found")
+    if st.button("⬅ Back"):
+        st.session_state.selected = None
 
-    # -----------------------------
-    # ACTOR SEARCH
-    # -----------------------------
-    actor_results = search_actor(final_query)
-
-    if actor_results:
-
-        st.subheader("👨‍🎤 Actor Movies")
-
-        movies = get_actor_movies(actor_results[0]["id"])
-
-        cols = st.columns(5)
-
-        for i, m in enumerate(movies[:5]):
-
-            with cols[i]:
-
-                if m.get("poster_path"):
-                    st.image(IMG + m["poster_path"])
-
-                st.caption(m.get("title"))
-
-
-# -----------------------------
-# HOMEPAGE
-# -----------------------------
+# ---------------- HOMEPAGE ----------------
 else:
 
-    st.subheader("🔥 Trending Movies")
+    st.subheader("🔥 Trending")
 
     movies = trending()
 
     cols = st.columns(5)
 
-    for i, m in enumerate(movies[:5]):
+    for i, m in enumerate(movies[:10]):
 
-        with cols[i]:
+        with cols[i % 5]:
+
+            title = m.get("title") or m.get("name")
 
             if m.get("poster_path"):
                 st.image(IMG + m["poster_path"])
 
-            st.caption(m.get("title"))
+            if st.button(title, key=i):
+                st.session_state.selected = m
