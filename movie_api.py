@@ -1,6 +1,6 @@
 import requests
 
-API_KEY = "YOUR_API_KEY"
+API_KEY = "624e1be491b94af1717b2ac8e121b5f1"
 
 IMG = "https://image.tmdb.org/t/p/w500"
 
